@@ -1,0 +1,353 @@
+<footer class="footer-game" data-footer-game>
+  <div class="footer-game__stage" data-footer-game-stage>
+    <div class="footer-game__ball" data-footer-game-ball aria-hidden="true"></div>
+    <div class="footer-game__content">
+      <p class="footer-game__hint">Move with ← → / A D / trackpad</p>
+      <div class="footer-game__links">
+        <a class="footer-game__email" href="mailto:hello@sandikalastudio.com">
+          hello@sandikalastudio.com
+        </a>
+        <a class="footer-game__button" href="mailto:hello@sandikalastudio.com">Schedule a call</a>
+      </div>
+    </div>
+    <div class="footer-game__paddle" data-footer-game-paddle aria-hidden="true"></div>
+  </div>
+</footer>
+
+<style>
+  .footer-game {
+    width: 100%;
+    background: #fbfaf7;
+    color: #1f1c19;
+    border-top: 1px solid rgba(31, 28, 25, 0.08);
+  }
+
+  .footer-game__stage {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+
+  .footer-game__content {
+    position: absolute;
+    left: 50%;
+    bottom: 104px;
+    z-index: 2;
+    display: flex;
+    width: min(100% - 40px, 540px);
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .footer-game__hint {
+    margin: 0;
+    color: rgba(31, 28, 25, 0.62);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .footer-game__links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    pointer-events: auto;
+  }
+
+  .footer-game__email {
+    color: #1f1c19;
+    font-size: 15px;
+    line-height: 1.2;
+    transition: opacity 0.18s ease;
+  }
+
+  .footer-game__email:hover {
+    opacity: 0.62;
+  }
+
+  .footer-game__button {
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 15px;
+    color: #1f1c19;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    border: 1px solid rgba(31, 28, 25, 0.28);
+    border-radius: 999px;
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  }
+
+  .footer-game__button:hover {
+    color: #fbfaf7;
+    background: #1f1c19;
+    border-color: #1f1c19;
+  }
+
+  .footer-game__ball {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 24px;
+    height: 24px;
+    z-index: 1;
+    background: #ff850c;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+  }
+
+  .footer-game__paddle {
+    position: absolute;
+    left: 50%;
+    bottom: 44px;
+    width: 132px;
+    height: 22px;
+    z-index: 1;
+    background: #ff120a;
+    transform: translate3d(-50%, 0, 0);
+    will-change: transform;
+  }
+
+  @media (max-width: 768px) {
+    .footer-game__stage {
+      height: 420px;
+    }
+
+    .footer-game__content {
+      bottom: 86px;
+      width: min(100% - 32px, 360px);
+      gap: 12px;
+    }
+
+    .footer-game__links {
+      gap: 10px;
+    }
+
+    .footer-game__email {
+      font-size: 14px;
+    }
+
+    .footer-game__button {
+      min-height: 32px;
+      padding: 8px 13px;
+      font-size: 13px;
+    }
+
+    .footer-game__ball {
+      width: 20px;
+      height: 20px;
+    }
+
+    .footer-game__paddle {
+      bottom: 34px;
+      width: 108px;
+      height: 20px;
+    }
+  }
+</style>
+
+<script>
+  const footerGameSelector = '[data-footer-game]';
+
+  function initFooterGame(root) {
+    if (!(root instanceof HTMLElement)) {
+      return;
+    }
+
+    if (typeof root.__footerGameCleanup === 'function') {
+      root.__footerGameCleanup();
+    }
+
+    const stage = root.querySelector('[data-footer-game-stage]');
+    const ball = root.querySelector('[data-footer-game-ball]');
+    const paddle = root.querySelector('[data-footer-game-paddle]');
+
+    if (!(stage instanceof HTMLElement) || !(ball instanceof HTMLElement) || !(paddle instanceof HTMLElement)) {
+      return;
+    }
+
+    const keys = new Set();
+    const state = {
+      frame: 0,
+      lastTime: performance.now(),
+      width: 0,
+      height: 0,
+      ballSize: 0,
+      paddleWidth: 0,
+      paddleHeight: 0,
+      paddleBottom: 0,
+      paddleX: 0,
+      targetPaddleX: 0,
+      ballX: 0,
+      ballY: 0,
+      velocityX: 150,
+      velocityY: 185,
+    };
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function resetBall() {
+      state.ballX = state.width * 0.5 - state.ballSize * 0.5;
+      state.ballY = Math.max(48, state.height * 0.16);
+      state.velocityX = (Math.random() > 0.5 ? 1 : -1) * 145;
+      state.velocityY = 190;
+    }
+
+    function measure() {
+      const rect = stage.getBoundingClientRect();
+      const ballRect = ball.getBoundingClientRect();
+      const paddleRect = paddle.getBoundingClientRect();
+      const styles = window.getComputedStyle(paddle);
+
+      state.width = rect.width;
+      state.height = rect.height;
+      state.ballSize = ballRect.width || 24;
+      state.paddleWidth = paddleRect.width || 132;
+      state.paddleHeight = paddleRect.height || 22;
+      state.paddleBottom = Number.parseFloat(styles.bottom) || 44;
+      state.paddleX = clamp(state.paddleX || state.width * 0.5, state.paddleWidth * 0.5, state.width - state.paddleWidth * 0.5);
+      state.targetPaddleX = clamp(state.targetPaddleX || state.paddleX, state.paddleWidth * 0.5, state.width - state.paddleWidth * 0.5);
+
+      if (!state.ballX || !state.ballY || state.ballY > state.height - state.ballSize) {
+        resetBall();
+      } else {
+        state.ballX = clamp(state.ballX, 0, state.width - state.ballSize);
+        state.ballY = clamp(state.ballY, 0, Math.max(0, state.height * 0.55));
+      }
+    }
+
+    function setPaddleFromPointer(event) {
+      const rect = stage.getBoundingClientRect();
+      state.targetPaddleX = clamp(event.clientX - rect.left, state.paddleWidth * 0.5, state.width - state.paddleWidth * 0.5);
+    }
+
+    function onKeyDown(event) {
+      const key = event.key.toLowerCase();
+
+      if (key === 'arrowleft' || key === 'arrowright' || key === 'a' || key === 'd') {
+        keys.add(key);
+      }
+    }
+
+    function onKeyUp(event) {
+      keys.delete(event.key.toLowerCase());
+    }
+
+    function movePaddle(deltaSeconds) {
+      const keyboardSpeed = Math.max(420, state.width * 0.92);
+
+      if (keys.has('arrowleft') || keys.has('a')) {
+        state.targetPaddleX -= keyboardSpeed * deltaSeconds;
+      }
+
+      if (keys.has('arrowright') || keys.has('d')) {
+        state.targetPaddleX += keyboardSpeed * deltaSeconds;
+      }
+
+      state.targetPaddleX = clamp(state.targetPaddleX, state.paddleWidth * 0.5, state.width - state.paddleWidth * 0.5);
+      state.paddleX += (state.targetPaddleX - state.paddleX) * Math.min(1, deltaSeconds * 16);
+    }
+
+    function updateBall(deltaSeconds) {
+      state.ballX += state.velocityX * deltaSeconds;
+      state.ballY += state.velocityY * deltaSeconds;
+
+      if (state.ballX <= 0) {
+        state.ballX = 0;
+        state.velocityX = Math.abs(state.velocityX);
+      }
+
+      if (state.ballX + state.ballSize >= state.width) {
+        state.ballX = state.width - state.ballSize;
+        state.velocityX = -Math.abs(state.velocityX);
+      }
+
+      if (state.ballY <= 0) {
+        state.ballY = 0;
+        state.velocityY = Math.abs(state.velocityY);
+      }
+
+      const paddleTop = state.height - state.paddleBottom - state.paddleHeight;
+      const paddleLeft = state.paddleX - state.paddleWidth * 0.5;
+      const paddleRight = state.paddleX + state.paddleWidth * 0.5;
+      const ballCenterX = state.ballX + state.ballSize * 0.5;
+      const ballBottom = state.ballY + state.ballSize;
+      const isFalling = state.velocityY > 0;
+      const hitsPaddle = isFalling
+        && ballBottom >= paddleTop
+        && state.ballY <= paddleTop + state.paddleHeight
+        && ballCenterX >= paddleLeft
+        && ballCenterX <= paddleRight;
+
+      if (hitsPaddle) {
+        const hitOffset = (ballCenterX - state.paddleX) / (state.paddleWidth * 0.5);
+        const speedBoost = Math.min(Math.abs(state.velocityY) + 10, 360);
+
+        state.ballY = paddleTop - state.ballSize;
+        state.velocityY = -speedBoost;
+        state.velocityX = clamp(state.velocityX + hitOffset * 150, -330, 330);
+      }
+
+      if (state.ballY > state.height + state.ballSize) {
+        resetBall();
+      }
+    }
+
+    function render() {
+      paddle.style.transform = `translate3d(${state.paddleX - state.width * 0.5}px, 0, 0)`;
+      ball.style.transform = `translate3d(${state.ballX}px, ${state.ballY}px, 0)`;
+    }
+
+    function tick(now) {
+      const deltaSeconds = Math.min((now - state.lastTime) / 1000, 0.032);
+      state.lastTime = now;
+
+      movePaddle(deltaSeconds);
+      updateBall(deltaSeconds);
+      render();
+
+      state.frame = window.requestAnimationFrame(tick);
+    }
+
+    function cleanup() {
+      window.cancelAnimationFrame(state.frame);
+      keys.clear();
+      stage.removeEventListener('pointermove', setPaddleFromPointer);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('resize', measure);
+      document.removeEventListener('astro:before-swap', cleanup);
+      delete root.__footerGameCleanup;
+    }
+
+    measure();
+    render();
+    stage.addEventListener('pointermove', setPaddleFromPointer);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('resize', measure);
+    document.addEventListener('astro:before-swap', cleanup, { once: true });
+
+    state.frame = window.requestAnimationFrame(tick);
+    root.__footerGameCleanup = cleanup;
+  }
+
+  function initFooterGames() {
+    document.querySelectorAll(footerGameSelector).forEach(initFooterGame);
+  }
+
+  initFooterGames();
+  document.addEventListener('astro:page-load', initFooterGames);
+</script>

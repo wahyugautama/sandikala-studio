@@ -1,0 +1,895 @@
+---
+import { projects } from '../data/projects';
+
+const copies = 9;
+const middleCopy = Math.floor(copies / 2);
+const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
+---
+
+<section
+  class="project-home"
+  data-infinite-project-list
+  data-projects={JSON.stringify(projects)}
+  data-copies={copies}
+  aria-label="Featured projects"
+>
+  <div class="project-preview" data-project-preview aria-hidden="true">
+    <canvas class="project-preview__canvas" data-project-canvas></canvas>
+  </div>
+
+  <div class="project-cursor" data-project-cursor aria-hidden="true">scroll, blip, infinite</div>
+
+  <div class="project-list-section">
+    <div class="project-list__viewport" data-project-viewport>
+      <div class="project-list__track" data-project-track>
+        {
+          repeatedProjects.map((project, index) => {
+            const isInitialActive = index === middleCopy * projects.length;
+            return (
+              <a
+                class:list={['project-item', isInitialActive && 'is-active']}
+                href={project.href}
+                aria-current={isInitialActive ? 'true' : undefined}
+                aria-hidden={String(!isInitialActive)}
+                tabindex={isInitialActive ? '0' : '-1'}
+              >
+                <span class="project-number">{project.number}</span>
+                <span class="project-title">{project.title}</span>
+                <span class="project-arrow" aria-hidden="true">&gt;</span>
+              </a>
+            );
+          })
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .project-home {
+    position: relative;
+    min-height: 100svh;
+    overflow: hidden;
+    padding: 88px 24px 112px;
+    color: var(--foreground);
+    background: #f5f5f2;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+
+  .project-home.is-dragging {
+    cursor: grabbing;
+  }
+
+  .project-preview {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(42vw, 560px);
+    height: min(55vh, 620px);
+    background: rgba(0, 0, 0, 0.025);
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+  }
+
+  .project-preview.has-active-image {
+    background: transparent;
+  }
+
+  .project-preview__canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .project-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    display: block;
+    padding: 7px 9px 8px;
+    color: #f5f5f2;
+    background: var(--foreground);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(var(--cursor-x, -80px), var(--cursor-y, -80px), 0);
+    transition:
+      opacity 0.16s ease,
+      background 0.18s ease,
+      color 0.18s ease;
+    white-space: nowrap;
+    will-change: transform;
+  }
+
+  .project-list-section {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: clamp(14px, 2vw, 28px);
+    padding: 0 24px;
+  }
+
+  .project-list__viewport {
+    width: min(100%, 1160px);
+    height: var(--item-height, 70px);
+    margin: 0 auto;
+    overflow: hidden;
+  }
+
+  .project-list__track {
+    will-change: transform;
+  }
+
+  .project-item {
+    width: 100%;
+    height: var(--item-height, 70px);
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .project-number,
+  .project-arrow {
+    font-family: 'Doto', sans-serif;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .project-number {
+    font-size: clamp(17px, 1.35vw, 22px);
+    line-height: 1;
+  }
+
+  .project-title {
+    min-width: 0;
+    overflow: hidden;
+    font-family: inherit;
+    font-size: clamp(38px, 5vw, 72px);
+    font-weight: 400;
+    line-height: 0.84;
+    letter-spacing: -0.065em;
+    text-overflow: clip;
+    white-space: nowrap;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .project-arrow {
+    font-size: clamp(28px, 3.5vw, 48px);
+    line-height: 1;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition:
+      opacity 0.25s ease,
+      transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .project-item.is-active:hover .project-arrow,
+  .project-item.is-active:focus-visible .project-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .project-item.is-active:hover .project-title,
+  .project-item.is-active:focus-visible .project-title {
+    transform: translateX(6px);
+  }
+
+  .project-item:focus {
+    outline: none;
+  }
+
+  .project-item:focus-visible {
+    outline: 1px solid currentColor;
+    outline-offset: 4px;
+  }
+
+  @media (max-width: 700px) {
+    .project-home {
+      padding: 78px 20px 96px;
+    }
+
+    .project-preview {
+      width: min(78vw, 380px);
+      height: min(48vh, 440px);
+    }
+
+    .project-list-section {
+      bottom: 16px;
+      padding: 0 20px;
+    }
+
+    .project-item {
+      grid-template-columns: 50px minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 0 10px;
+    }
+
+    .project-number {
+      font-size: 20px;
+    }
+
+    .project-title {
+      font-size: clamp(32px, 10vw, 56px);
+    }
+  }
+
+  @media (hover: none) {
+    .project-cursor {
+      display: none;
+    }
+
+    .project-arrow {
+      display: none;
+    }
+
+    .project-item {
+      grid-template-columns: 50px minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  const projectListSelector = '[data-infinite-project-list]';
+
+  const vertexShader = `
+    varying vec2 vUv;
+    uniform float uDirection;
+    uniform float uProgress;
+    uniform float uReducedMotion;
+
+    void main() {
+      vUv = uv;
+      vec3 pos = position;
+      float wave = sin((uv.y + uProgress * 0.6) * 3.14159265);
+      pos.y += wave * uDirection * (1.0 - uReducedMotion) * 0.035 * sin(uProgress * 3.14159265);
+      gl_Position = vec4(pos, 1.0);
+    }
+  `;
+
+  const fragmentShader = `
+    precision highp float;
+
+    varying vec2 vUv;
+
+    uniform sampler2D uFromTexture;
+    uniform sampler2D uToTexture;
+    uniform vec2 uFromTextureSize;
+    uniform vec2 uToTextureSize;
+    uniform vec2 uPlaneSize;
+    uniform float uProgress;
+    uniform float uReducedMotion;
+    uniform float uSeed;
+
+    float random(vec2 value) {
+      return fract(sin(dot(value, vec2(127.1, 311.7)) + uSeed) * 43758.5453123);
+    }
+
+    vec3 containUv(vec2 uv, vec2 textureSize, vec2 planeSize, out float alpha) {
+      float textureAspect = textureSize.x / textureSize.y;
+      float planeAspect = planeSize.x / planeSize.y;
+      vec2 scale = vec2(1.0);
+
+      if (textureAspect > planeAspect) {
+        scale.y = planeAspect / textureAspect;
+      } else {
+        scale.x = textureAspect / planeAspect;
+      }
+
+      vec2 minUv = (1.0 - scale) * 0.5;
+      vec2 maxUv = minUv + scale;
+      vec2 inside = step(minUv, uv) * step(uv, maxUv);
+      alpha = inside.x * inside.y;
+      return vec3((uv - minUv) / scale, alpha);
+    }
+
+    vec2 pixelateUv(vec2 uv, float progress) {
+      float strength = sin(progress * 3.14159265);
+      float blockAmount = mix(180.0, 18.0, strength);
+      vec2 grid = vec2(blockAmount);
+      vec2 blockedUv = (floor(uv * grid) + 0.5) / grid;
+      return mix(uv, blockedUv, strength);
+    }
+
+    void main() {
+      float fromAlpha;
+      float toAlpha;
+      vec3 fromData = containUv(vUv, uFromTextureSize, uPlaneSize, fromAlpha);
+      vec3 toData = containUv(vUv, uToTextureSize, uPlaneSize, toAlpha);
+      vec2 fromUv = fromData.xy;
+      vec2 toUv = toData.xy;
+
+      if (uReducedMotion < 0.5) {
+        fromUv = pixelateUv(fromUv, uProgress);
+        toUv = pixelateUv(toUv, uProgress);
+      }
+
+      vec4 fromColor = texture2D(uFromTexture, fromUv) * fromAlpha;
+      vec4 toColor = texture2D(uToTexture, toUv) * toAlpha;
+      float blend = uProgress;
+
+      if (uReducedMotion < 0.5) {
+        vec2 block = floor(vUv * 28.0);
+        float threshold = random(block);
+        blend = smoothstep(threshold - 0.18, threshold + 0.18, uProgress);
+      }
+
+      gl_FragColor = mix(fromColor, toColor, blend);
+    }
+  `;
+
+  const initInfiniteProjectList = (root) => {
+    if (!(root instanceof HTMLElement)) {
+      return;
+    }
+
+    if (typeof root.__infiniteProjectListCleanup === 'function') {
+      root.__infiniteProjectListCleanup();
+    }
+
+    const track = root.querySelector('[data-project-track]');
+    const preview = root.querySelector('[data-project-preview]');
+    const canvas = root.querySelector('[data-project-canvas]');
+    const cursor = root.querySelector('[data-project-cursor]');
+    const items = Array.from(root.querySelectorAll('.project-item'));
+    const projects = JSON.parse(root.dataset.projects || '[]');
+    const copies = Number(root.dataset.copies || 9);
+
+    if (
+      !(track instanceof HTMLElement) ||
+      !(preview instanceof HTMLElement) ||
+      !(canvas instanceof HTMLCanvasElement) ||
+      projects.length === 0 ||
+      items.length === 0
+    ) {
+      return;
+    }
+
+    const projectCount = projects.length;
+    const middleCopy = Math.floor(copies / 2);
+    let itemHeight = 70;
+    let currentIndex = middleCopy * projectCount;
+    let currentY = 0;
+    let targetY = 0;
+    let wheelDelta = 0;
+    let lastWheelStep = 0;
+    let animationFrame = 0;
+    let activeProjectIndex = -1;
+    let isDragging = false;
+    let pointerStartY = 0;
+    let pointerStartX = 0;
+    let dragStartTargetY = 0;
+    let activePointerId = null;
+    let suppressNextClick = false;
+    let cursorX = -80;
+    let cursorY = -80;
+    let cursorTargetX = -80;
+    let cursorTargetY = -80;
+    let renderer = null;
+    let scene = null;
+    let camera = null;
+    let material = null;
+    let mesh = null;
+    let fallbackTexture = null;
+    let three = null;
+    let currentTextureIndex = 0;
+    let transition = null;
+    let transitionDirection = 1;
+    const textures = [];
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const wheelThreshold = 24;
+    const wheelCooldown = 80;
+
+    const getProjectIndex = (index) => ((index % projectCount) + projectCount) % projectCount;
+
+    const getRenderedIndex = (index) => ((index % items.length) + items.length) % items.length;
+
+    const getTexture = (projectIndex) => textures[projectIndex]?.texture || null;
+
+    const updateTextureUniform = (uniformName, sizeUniformName, texture) => {
+      if (!material || !texture) {
+        return;
+      }
+
+      material.uniforms[uniformName].value = texture;
+      material.uniforms[sizeUniformName].value.set(
+        texture.image?.naturalWidth || texture.image?.width || 1,
+        texture.image?.naturalHeight || texture.image?.height || 1
+      );
+    };
+
+    const completeTransition = () => {
+      if (!transition || !material) {
+        return;
+      }
+
+      const nextTexture = getTexture(transition.to);
+
+      if (nextTexture) {
+        currentTextureIndex = transition.to;
+        updateTextureUniform('uFromTexture', 'uFromTextureSize', nextTexture);
+        updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
+        material.uniforms.uProgress.value = 1;
+        preview.classList.add('has-active-image');
+      }
+
+      transition = null;
+    };
+
+    const updateActiveImage = (projectIndex, direction = 1) => {
+      if (!material) {
+        currentTextureIndex = projectIndex;
+        return;
+      }
+
+      const nextTexture = getTexture(projectIndex);
+      const currentTexture = getTexture(currentTextureIndex);
+
+      if (!nextTexture) {
+        return;
+      }
+
+      if (!currentTexture) {
+        currentTextureIndex = projectIndex;
+        updateTextureUniform('uFromTexture', 'uFromTextureSize', nextTexture);
+        updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
+        material.uniforms.uProgress.value = 1;
+        preview.classList.add('has-active-image');
+        return;
+      }
+
+      if (projectIndex === currentTextureIndex && !transition) {
+        return;
+      }
+
+      completeTransition();
+      transitionDirection = direction || 1;
+      updateTextureUniform('uFromTexture', 'uFromTextureSize', currentTexture);
+      updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
+      material.uniforms.uProgress.value = 0;
+      material.uniforms.uDirection.value = transitionDirection;
+      material.uniforms.uSeed.value = Math.random() * 1000;
+      material.uniforms.uReducedMotion.value = reducedMotionQuery.matches ? 1 : 0;
+      transition = {
+        to: projectIndex,
+        start: performance.now(),
+        duration: reducedMotionQuery.matches ? 320 : 680,
+      };
+      preview.classList.add('has-active-image');
+    };
+
+    const setActiveProject = (index, direction = 1) => {
+      const projectIndex = getProjectIndex(index);
+      const renderedIndex = getRenderedIndex(Math.round(index));
+
+      items.forEach((item, itemIndex) => {
+        const isActive = itemIndex === renderedIndex;
+
+        item.classList.toggle('is-active', isActive);
+        item.setAttribute('aria-hidden', String(!isActive));
+        item.setAttribute('tabindex', isActive ? '0' : '-1');
+
+        if (isActive) {
+          item.setAttribute('aria-current', 'true');
+        } else {
+          item.removeAttribute('aria-current');
+        }
+      });
+
+      if (projectIndex === activeProjectIndex) {
+        return;
+      }
+
+      activeProjectIndex = projectIndex;
+      updateActiveImage(projectIndex, direction);
+    };
+
+    const setTrackPosition = () => {
+      track.style.transform = `translate3d(0, ${currentY}px, 0)`;
+    };
+
+    const syncTargetToIndex = () => {
+      targetY = -currentIndex * itemHeight;
+    };
+
+    const nearestIndexFromY = (y) => Math.round(-y / itemHeight);
+
+    const recenterIfNeeded = () => {
+      const lowEdge = projectCount * 2;
+      const highEdge = projectCount * (copies - 2);
+      const referenceIndex = nearestIndexFromY(targetY);
+      let shift = 0;
+
+      if (referenceIndex < lowEdge) {
+        shift = projectCount * middleCopy;
+      } else if (referenceIndex >= highEdge) {
+        shift = -projectCount * middleCopy;
+      }
+
+      if (shift === 0) {
+        return;
+      }
+
+      const yShift = -shift * itemHeight;
+      currentIndex += shift;
+      currentY += yShift;
+      targetY += yShift;
+      dragStartTargetY += yShift;
+      setTrackPosition();
+    };
+
+    const snapToIndex = (index, direction = index > currentIndex ? 1 : -1) => {
+      currentIndex = index;
+      syncTargetToIndex();
+      recenterIfNeeded();
+      setActiveProject(currentIndex, direction);
+    };
+
+    const step = (direction) => {
+      snapToIndex(currentIndex + direction, direction);
+    };
+
+    const renderPreview = () => {
+      if (!renderer || !scene || !camera || !material) {
+        return;
+      }
+
+      if (transition) {
+        const elapsed = performance.now() - transition.start;
+        const rawProgress = Math.min(elapsed / transition.duration, 1);
+        const easedProgress = 1 - Math.pow(1 - rawProgress, 3);
+        material.uniforms.uProgress.value = easedProgress;
+        material.uniforms.uDirection.value = transitionDirection;
+        material.uniforms.uReducedMotion.value = reducedMotionQuery.matches ? 1 : 0;
+
+        if (rawProgress >= 1) {
+          const nextTexture = getTexture(transition.to);
+
+          if (nextTexture) {
+            currentTextureIndex = transition.to;
+            updateTextureUniform('uFromTexture', 'uFromTextureSize', nextTexture);
+            updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
+            material.uniforms.uProgress.value = 1;
+          }
+
+          transition = null;
+        }
+      }
+
+      renderer.render(scene, camera);
+    };
+
+    const animate = () => {
+      recenterIfNeeded();
+      currentY += (targetY - currentY) * 0.16;
+      cursorX += (cursorTargetX - cursorX) * 0.22;
+      cursorY += (cursorTargetY - cursorY) * 0.22;
+
+      if (Math.abs(targetY - currentY) < 0.02) {
+        currentY = targetY;
+      }
+
+      setTrackPosition();
+      renderPreview();
+
+      if (cursor instanceof HTMLElement) {
+        cursor.style.setProperty('--cursor-x', `${cursorX}px`);
+        cursor.style.setProperty('--cursor-y', `${cursorY}px`);
+      }
+
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    const measure = () => {
+      const activeProject = getProjectIndex(currentIndex);
+      const previewRect = preview.getBoundingClientRect();
+      itemHeight = Math.max(48, Math.min(window.innerWidth * 0.05, 70));
+      root.style.setProperty('--item-height', `${itemHeight}px`);
+
+      if (renderer && material) {
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(Math.max(1, previewRect.width), Math.max(1, previewRect.height), false);
+        material.uniforms.uPlaneSize.value.set(
+          Math.max(1, previewRect.width),
+          Math.max(1, previewRect.height)
+        );
+      }
+
+      currentIndex = middleCopy * projectCount + activeProject;
+      syncTargetToIndex();
+      currentY = targetY;
+      setTrackPosition();
+      setActiveProject(currentIndex, transitionDirection);
+    };
+
+    const setupPreview = async () => {
+      three = await import('three');
+
+      if (!root.isConnected) {
+        return;
+      }
+
+      const {
+        DataTexture,
+        LinearFilter,
+        Mesh,
+        OrthographicCamera,
+        PlaneGeometry,
+        RGBAFormat,
+        SRGBColorSpace,
+        Scene,
+        ShaderMaterial,
+        TextureLoader,
+        Vector2,
+        WebGLRenderer,
+      } = three;
+
+      fallbackTexture = new DataTexture(new Uint8Array([245, 245, 242, 0]), 1, 1, RGBAFormat);
+      fallbackTexture.needsUpdate = true;
+
+      renderer = new WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        premultipliedAlpha: false,
+      });
+      renderer.setClearColor(0x000000, 0);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+      scene = new Scene();
+      camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      material = new ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        uniforms: {
+          uFromTexture: { value: fallbackTexture },
+          uToTexture: { value: fallbackTexture },
+          uFromTextureSize: { value: new Vector2(1, 1) },
+          uToTextureSize: { value: new Vector2(1, 1) },
+          uPlaneSize: { value: new Vector2(1, 1) },
+          uProgress: { value: 1 },
+          uReducedMotion: { value: reducedMotionQuery.matches ? 1 : 0 },
+          uDirection: { value: 1 },
+          uSeed: { value: Math.random() * 1000 },
+        },
+      });
+
+      mesh = new Mesh(new PlaneGeometry(2, 2, 1, 24), material);
+      scene.add(mesh);
+
+      const loader = new TextureLoader();
+      loader.setCrossOrigin('anonymous');
+      projects.forEach((project, projectIndex) => {
+        textures[projectIndex] = {
+          texture: null,
+          failed: false,
+        };
+
+        loader.load(
+          project.image,
+          (texture) => {
+            texture.colorSpace = SRGBColorSpace;
+            texture.minFilter = LinearFilter;
+            texture.magFilter = LinearFilter;
+            texture.generateMipmaps = false;
+            texture.needsUpdate = true;
+            textures[projectIndex].texture = texture;
+
+            if (projectIndex === currentTextureIndex) {
+              updateTextureUniform('uFromTexture', 'uFromTextureSize', texture);
+              updateTextureUniform('uToTexture', 'uToTextureSize', texture);
+              material.uniforms.uProgress.value = 1;
+              preview.classList.add('has-active-image');
+            }
+
+            if (projectIndex === activeProjectIndex) {
+              updateActiveImage(projectIndex, transitionDirection);
+            }
+          },
+          undefined,
+          () => {
+            textures[projectIndex].failed = true;
+          }
+        );
+      });
+
+      measure();
+      renderPreview();
+    };
+
+    const onWheel = (event) => {
+      event.preventDefault();
+      wheelDelta += event.deltaY;
+      const now = performance.now();
+
+      if (Math.abs(wheelDelta) < wheelThreshold || now - lastWheelStep < wheelCooldown) {
+        return;
+      }
+
+      const direction = wheelDelta > 0 ? 1 : -1;
+      wheelDelta = 0;
+      lastWheelStep = now;
+      step(direction);
+    };
+
+    const onPointerDown = (event) => {
+      if (event.button !== undefined && event.button !== 0) {
+        return;
+      }
+
+      isDragging = true;
+      activePointerId = event.pointerId;
+      pointerStartY = event.clientY;
+      pointerStartX = event.clientX;
+      dragStartTargetY = targetY;
+      suppressNextClick = false;
+      root.classList.add('is-dragging');
+      root.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event) => {
+      if (!isDragging || event.pointerId !== activePointerId) {
+        return;
+      }
+
+      const deltaY = event.clientY - pointerStartY;
+      const deltaX = event.clientX - pointerStartX;
+
+      if (Math.hypot(deltaX, deltaY) > 6) {
+        suppressNextClick = true;
+      }
+
+      targetY = dragStartTargetY + deltaY;
+      setActiveProject(nearestIndexFromY(targetY), deltaY < 0 ? 1 : -1);
+    };
+
+    const endDrag = (event) => {
+      if (!isDragging || event.pointerId !== activePointerId) {
+        return;
+      }
+
+      isDragging = false;
+      activePointerId = null;
+      root.classList.remove('is-dragging');
+
+      if (root.hasPointerCapture(event.pointerId)) {
+        root.releasePointerCapture(event.pointerId);
+      }
+
+      snapToIndex(nearestIndexFromY(targetY), targetY < dragStartTargetY ? 1 : -1);
+    };
+
+    const onClick = (event) => {
+      const link = event.target instanceof Element ? event.target.closest('.project-item') : null;
+
+      if (!(link instanceof HTMLAnchorElement)) {
+        return;
+      }
+
+      if (suppressNextClick) {
+        event.preventDefault();
+      }
+
+      suppressNextClick = false;
+    };
+
+    const onKeyDown = (event) => {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        step(1);
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        step(-1);
+      }
+    };
+
+    const onCursorMove = (event) => {
+      if (!(cursor instanceof HTMLElement) || event.pointerType === 'touch') {
+        return;
+      }
+
+      cursorTargetX = event.clientX + 14;
+      cursorTargetY = event.clientY + 14;
+      cursor.style.opacity = '1';
+    };
+
+    const onCursorLeave = () => {
+      if (cursor instanceof HTMLElement) {
+        cursor.style.opacity = '0';
+      }
+    };
+
+    const setCursorText = (text) => {
+      if (cursor instanceof HTMLElement) {
+        cursor.textContent = text;
+      }
+    };
+
+    const onViewTargetEnter = () => {
+      setCursorText('view');
+    };
+
+    const onViewTargetLeave = () => {
+      setCursorText('scroll, blip, infinite');
+    };
+
+    const cleanup = () => {
+      window.cancelAnimationFrame(animationFrame);
+      root.removeEventListener('wheel', onWheel);
+      root.removeEventListener('pointerdown', onPointerDown);
+      root.removeEventListener('pointermove', onPointerMove);
+      root.removeEventListener('pointermove', onCursorMove);
+      root.removeEventListener('pointerup', endDrag);
+      root.removeEventListener('pointercancel', endDrag);
+      root.removeEventListener('pointerleave', onCursorLeave);
+      root.removeEventListener('click', onClick);
+      preview.removeEventListener('pointerenter', onViewTargetEnter);
+      preview.removeEventListener('pointerleave', onViewTargetLeave);
+      items.forEach((item) => {
+        item.removeEventListener('pointerenter', onViewTargetEnter);
+        item.removeEventListener('pointerleave', onViewTargetLeave);
+      });
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', measure);
+      document.removeEventListener('astro:before-swap', cleanup);
+      root.classList.remove('is-dragging');
+      textures.forEach((entry) => {
+        entry?.texture?.dispose();
+      });
+      fallbackTexture?.dispose();
+      mesh?.geometry?.dispose();
+      material?.dispose();
+      renderer?.dispose();
+      delete root.__infiniteProjectListCleanup;
+    };
+
+    root.addEventListener('wheel', onWheel, { passive: false });
+    root.addEventListener('pointerdown', onPointerDown);
+    root.addEventListener('pointermove', onPointerMove);
+    root.addEventListener('pointermove', onCursorMove);
+    root.addEventListener('pointerup', endDrag);
+    root.addEventListener('pointercancel', endDrag);
+    root.addEventListener('pointerleave', onCursorLeave);
+    root.addEventListener('click', onClick);
+    preview.addEventListener('pointerenter', onViewTargetEnter);
+    preview.addEventListener('pointerleave', onViewTargetLeave);
+    items.forEach((item) => {
+      item.addEventListener('pointerenter', onViewTargetEnter);
+      item.addEventListener('pointerleave', onViewTargetLeave);
+    });
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('resize', measure);
+    document.addEventListener('astro:before-swap', cleanup, { once: true });
+
+    root.__infiniteProjectListCleanup = cleanup;
+
+    measure();
+    setupPreview();
+    animationFrame = window.requestAnimationFrame(animate);
+  };
+
+  const initInfiniteProjectLists = () => {
+    document.querySelectorAll(projectListSelector).forEach(initInfiniteProjectList);
+  };
+
+  initInfiniteProjectLists();
+  document.addEventListener('astro:page-load', initInfiniteProjectLists);
+</script>

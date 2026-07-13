@@ -1,0 +1,37 @@
+---
+type Cell = [number, number];
+
+interface Props {
+  cells: Cell[];
+  color: string;
+  size?: number;
+  gap?: number;
+  label?: string;
+}
+
+const { cells, color, size = 12, gap = 5, label } = Astro.props;
+const activeCells = new Set(cells.map(([x, y]) => `${x}-${y}`));
+const gridCells = Array.from({ length: 35 }, (_, index) => {
+  const x = index % 5;
+  const y = Math.floor(index / 5);
+
+  return {
+    key: `${x}-${y}`,
+    active: activeCells.has(`${x}-${y}`),
+  };
+});
+---
+
+<div
+  class="pixel-icon"
+  style={`--pixel-color: ${color}; --pixel-size: ${size}px; --pixel-gap: ${gap}px;`}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+>
+  {
+    gridCells.map((cell) => (
+      <span class:list={['pixel-cell', { 'pixel-cell-active': cell.active }]}></span>
+    ))
+  }
+</div>

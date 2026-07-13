@@ -1,0 +1,409 @@
+<footer class="footer-snake" data-footer-snake>
+  <div class="footer-snake__content">
+    <p class="footer-snake__hint">
+      Move with ← ↑ ↓ → / W A S D / trackpad
+    </p>
+
+    <div class="footer-snake__links">
+      <a class="footer-snake__email" href="mailto:hello@sandikalastudio.com">
+        hello@sandikalastudio.com
+      </a>
+      <a href="mailto:hello@sandikalastudio.com" class="footer-snake__button">Schedule a call</a>
+    </div>
+  </div>
+
+  <div class="footer-snake__stage" data-snake-stage aria-hidden="true"></div>
+</footer>
+
+<style>
+  .footer-snake {
+    position: relative;
+    display: flex;
+    min-height: 520px;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #fbfaf7;
+    color: #1f1c19;
+    border-top: 1px solid rgba(31, 28, 25, 0.08);
+  }
+
+  .footer-snake__content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    width: min(100% - 40px, 560px);
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .footer-snake__hint {
+    margin: 0;
+    color: rgba(31, 28, 25, 0.62);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .footer-snake__links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    pointer-events: auto;
+  }
+
+  .footer-snake__email {
+    color: #1f1c19;
+    font-size: 15px;
+    line-height: 1.2;
+    transition: opacity 0.18s ease;
+  }
+
+  .footer-snake__email:hover {
+    opacity: 0.62;
+  }
+
+  .footer-snake__button {
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 15px;
+    color: #1f1c19;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    border: 1px solid rgba(31, 28, 25, 0.28);
+    border-radius: 999px;
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  }
+
+  .footer-snake__button:hover {
+    color: #fbfaf7;
+    background: #1f1c19;
+    border-color: #1f1c19;
+  }
+
+  .footer-snake__stage {
+    position: relative;
+    width: min(100% - 56px, 620px);
+    height: 184px;
+    margin-top: 62px;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  :global(.footer-snake__cell) {
+    position: absolute;
+    width: var(--snake-cell-size, 12px);
+    height: var(--snake-cell-size, 12px);
+    transform: translate3d(
+      calc(var(--snake-x, 0) * var(--snake-cell-size, 12px)),
+      calc(var(--snake-y, 0) * var(--snake-cell-size, 12px)),
+      0
+    );
+    will-change: transform;
+  }
+
+  :global(.footer-snake__snake) {
+    background: #ff850c;
+  }
+
+  :global(.footer-snake__food) {
+    background: #ff120a;
+  }
+
+  @media (max-width: 768px) {
+    .footer-snake {
+      min-height: 420px;
+    }
+
+    .footer-snake__content {
+      width: min(100% - 32px, 360px);
+      gap: 12px;
+    }
+
+    .footer-snake__links {
+      gap: 10px;
+    }
+
+    .footer-snake__email {
+      font-size: 14px;
+    }
+
+    .footer-snake__button {
+      min-height: 32px;
+      padding: 8px 13px;
+      font-size: 13px;
+    }
+
+    .footer-snake__stage {
+      width: min(100% - 36px, 360px);
+      height: 144px;
+      margin-top: 44px;
+    }
+  }
+</style>
+
+<script>
+  const footerSnakeSelector = '[data-footer-snake]';
+
+  function initFooterSnake(root) {
+    if (!(root instanceof HTMLElement)) {
+      return;
+    }
+
+    if (typeof root.__footerSnakeCleanup === 'function') {
+      root.__footerSnakeCleanup();
+    }
+
+    const stage = root.querySelector('[data-snake-stage]');
+
+    if (!(stage instanceof HTMLElement)) {
+      return;
+    }
+
+    const state = {
+      frame: 0,
+      lastMoveTime: 0,
+      cellSize: 12,
+      columns: 0,
+      rows: 0,
+      direction: { x: 1, y: 0 },
+      nextDirection: { x: 1, y: 0 },
+      snake: [],
+      food: { x: 0, y: 0 },
+      cells: [],
+      foodCell: null,
+      moveDelay: 140,
+    };
+
+    function positionsMatch(a, b) {
+      return a.x === b.x && a.y === b.y;
+    }
+
+    function isReverse(nextDirection) {
+      return (
+        nextDirection.x + state.direction.x === 0
+        && nextDirection.y + state.direction.y === 0
+      );
+    }
+
+    function setDirection(nextDirection) {
+      if (isReverse(nextDirection)) {
+        return;
+      }
+
+      state.nextDirection = nextDirection;
+    }
+
+    function randomPosition() {
+      return {
+        x: Math.floor(Math.random() * state.columns),
+        y: Math.floor(Math.random() * state.rows),
+      };
+    }
+
+    function placeFood() {
+      let nextFood = randomPosition();
+      let attempts = 0;
+
+      while (state.snake.some((segment) => positionsMatch(segment, nextFood)) && attempts < 80) {
+        nextFood = randomPosition();
+        attempts += 1;
+      }
+
+      state.food = nextFood;
+    }
+
+    function resetSnake() {
+      const centerX = Math.max(2, Math.floor(state.columns / 2));
+      const centerY = Math.max(1, Math.floor(state.rows / 2));
+
+      state.direction = { x: 1, y: 0 };
+      state.nextDirection = { x: 1, y: 0 };
+      state.snake = [
+        { x: centerX, y: centerY },
+        { x: centerX - 1, y: centerY },
+        { x: centerX - 2, y: centerY },
+      ];
+
+      placeFood();
+    }
+
+    function createCell(className) {
+      const cell = document.createElement('div');
+      cell.className = `footer-snake__cell ${className}`;
+      stage.append(cell);
+      return cell;
+    }
+
+    function ensureCells() {
+      while (state.cells.length < state.snake.length) {
+        state.cells.push(createCell('footer-snake__snake'));
+      }
+
+      while (state.cells.length > state.snake.length) {
+        const cell = state.cells.pop();
+        cell?.remove();
+      }
+
+      if (!state.foodCell) {
+        state.foodCell = createCell('footer-snake__food');
+      }
+    }
+
+    function positionCell(cell, position) {
+      cell.style.setProperty('--snake-x', position.x);
+      cell.style.setProperty('--snake-y', position.y);
+    }
+
+    function render() {
+      stage.style.setProperty('--snake-cell-size', `${state.cellSize}px`);
+      ensureCells();
+
+      state.snake.forEach((segment, index) => {
+        positionCell(state.cells[index], segment);
+      });
+
+      if (state.foodCell) {
+        positionCell(state.foodCell, state.food);
+      }
+    }
+
+    function measure() {
+      const rect = stage.getBoundingClientRect();
+      const previousColumns = state.columns;
+      const previousRows = state.rows;
+      const targetCellSize = rect.width < 520 ? 10 : 12;
+
+      state.cellSize = targetCellSize;
+      state.columns = Math.max(12, Math.floor(rect.width / state.cellSize));
+      state.rows = Math.max(10, Math.floor(rect.height / state.cellSize));
+
+      if (state.columns !== previousColumns || state.rows !== previousRows) {
+        resetSnake();
+      }
+
+      render();
+    }
+
+    function moveSnake() {
+      state.direction = state.nextDirection;
+
+      const head = state.snake[0];
+      const nextHead = {
+        x: head.x + state.direction.x,
+        y: head.y + state.direction.y,
+      };
+      const hitsWall = (
+        nextHead.x < 0
+        || nextHead.y < 0
+        || nextHead.x >= state.columns
+        || nextHead.y >= state.rows
+      );
+      const hitsSelf = state.snake.some((segment) => positionsMatch(segment, nextHead));
+
+      if (hitsWall || hitsSelf) {
+        resetSnake();
+        return;
+      }
+
+      state.snake.unshift(nextHead);
+
+      if (positionsMatch(nextHead, state.food)) {
+        placeFood();
+      } else {
+        state.snake.pop();
+      }
+    }
+
+    function tick(now) {
+      if (now - state.lastMoveTime >= state.moveDelay) {
+        state.lastMoveTime = now;
+        moveSnake();
+        render();
+      }
+
+      state.frame = window.requestAnimationFrame(tick);
+    }
+
+    function onKeyDown(event) {
+      const key = event.key.toLowerCase();
+      const directionMap = {
+        arrowleft: { x: -1, y: 0 },
+        a: { x: -1, y: 0 },
+        arrowright: { x: 1, y: 0 },
+        d: { x: 1, y: 0 },
+        arrowup: { x: 0, y: -1 },
+        w: { x: 0, y: -1 },
+        arrowdown: { x: 0, y: 1 },
+        s: { x: 0, y: 1 },
+      };
+      const nextDirection = directionMap[key];
+
+      if (!nextDirection) {
+        return;
+      }
+
+      event.preventDefault();
+      setDirection(nextDirection);
+    }
+
+    function onPointerMove(event) {
+      const head = state.snake[0];
+
+      if (!head) {
+        return;
+      }
+
+      const rect = stage.getBoundingClientRect();
+      const headCenterX = rect.left + (head.x + 0.5) * state.cellSize;
+      const headCenterY = rect.top + (head.y + 0.5) * state.cellSize;
+      const deltaX = event.clientX - headCenterX;
+      const deltaY = event.clientY - headCenterY;
+
+      if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < state.cellSize * 0.75) {
+        return;
+      }
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setDirection({ x: deltaX > 0 ? 1 : -1, y: 0 });
+      } else {
+        setDirection({ x: 0, y: deltaY > 0 ? 1 : -1 });
+      }
+    }
+
+    function cleanup() {
+      window.cancelAnimationFrame(state.frame);
+      root.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', measure);
+      document.removeEventListener('astro:before-swap', cleanup);
+      delete root.__footerSnakeCleanup;
+    }
+
+    measure();
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('resize', measure);
+    root.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('astro:before-swap', cleanup, { once: true });
+
+    state.frame = window.requestAnimationFrame(tick);
+    root.__footerSnakeCleanup = cleanup;
+  }
+
+  function initFooterSnakes() {
+    document.querySelectorAll(footerSnakeSelector).forEach(initFooterSnake);
+  }
+
+  initFooterSnakes();
+  document.addEventListener('astro:page-load', initFooterSnakes);
+</script>

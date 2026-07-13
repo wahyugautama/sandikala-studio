@@ -1,0 +1,253 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { projects, type Project } from '../../data/projects';
+
+interface Props {
+  project: Project;
+}
+
+export function getStaticPaths() {
+  return projects.map((project) => ({
+    params: {
+      slug: project.slug,
+    },
+    props: {
+      project,
+    },
+  }));
+}
+
+const { project } = Astro.props;
+const projectIndex = projects.findIndex((item) => item.slug === project.slug);
+const nextProject = projects[(projectIndex + 1) % projects.length];
+---
+
+<Layout title={`${project.title} — Sandikala Studio`} description={project.intro}>
+  <article class="project-page">
+    <header class="project-hero">
+      <div class="project-hero__meta">
+        <p class="project-hero__number">{project.number}</p>
+        <div class="project-hero__details">
+          <p>{project.year}</p>
+          <p>{project.category}</p>
+        </div>
+      </div>
+      <h1 class="project-hero__title">{project.title}</h1>
+      <img class="project-hero__image" src={project.image} alt={`${project.title} project image`} />
+    </header>
+
+    <section class="project-intro" aria-label="Project introduction">
+      <div class="project-services">
+        <h2 class="project-section-label">Services</h2>
+        <ul class="project-services__list">
+          {project.services.map((service) => <li>{service}</li>)}
+        </ul>
+      </div>
+      <div class="project-copy">
+        <h2 class="project-copy__intro">{project.intro}</h2>
+        <p>{project.description}</p>
+      </div>
+    </section>
+
+    <section class="project-gallery" aria-label={`${project.title} gallery`}>
+      {
+        project.gallery.map((image, index) => (
+          <img src={image} alt={`${project.title} gallery image ${index + 1}`} />
+        ))
+      }
+    </section>
+
+    <a class="next-project" href={nextProject.href}>
+      <span class="next-project__label">Next project</span>
+      <span class="next-project__row">
+        <span class="next-project__number">{nextProject.number}</span>
+        <span class="next-project__title">{nextProject.title}</span>
+        <span class="next-project__arrow" aria-hidden="true">&gt;</span>
+      </span>
+    </a>
+  </article>
+</Layout>
+
+<style>
+  .project-page {
+    padding: 116px 32px 80px;
+    background: #f5f5f2;
+  }
+
+  .project-hero {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .project-hero__meta {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .project-hero__number,
+  .project-hero__details p {
+    margin: 0;
+  }
+
+  .project-hero__number {
+    font-family: 'Doto', sans-serif;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .project-hero__details {
+    display: flex;
+    gap: clamp(24px, 6vw, 96px);
+    text-align: right;
+  }
+
+  .project-hero__title {
+    margin: 0 0 42px;
+    font-size: clamp(56px, 10vw, 156px);
+    font-weight: 400;
+    line-height: 0.84;
+    letter-spacing: -0.065em;
+  }
+
+  .project-hero__image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .project-intro {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+    gap: clamp(40px, 8vw, 140px);
+    max-width: 1180px;
+    margin: clamp(70px, 10vw, 140px) auto;
+  }
+
+  .project-section-label {
+    margin: 0 0 18px;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .project-services__list {
+    display: grid;
+    gap: 7px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .project-copy {
+    max-width: 780px;
+  }
+
+  .project-copy__intro {
+    margin: 0 0 28px;
+    font-size: clamp(28px, 4vw, 54px);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+  }
+
+  .project-copy p {
+    margin: 0;
+    max-width: 58ch;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+
+  .project-gallery {
+    display: grid;
+    gap: clamp(48px, 8vw, 112px);
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .project-gallery img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .next-project {
+    display: block;
+    max-width: 1180px;
+    margin: clamp(78px, 12vw, 150px) auto 0;
+    padding: 28px 0 0;
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  }
+
+  .next-project__label {
+    display: block;
+    margin-bottom: 18px;
+    font-size: 14px;
+  }
+
+  .next-project__row {
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .next-project__number,
+  .next-project__arrow {
+    font-family: 'Doto', sans-serif;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .next-project__title {
+    min-width: 0;
+    overflow: hidden;
+    font-size: clamp(38px, 5vw, 72px);
+    font-weight: 400;
+    line-height: 0.84;
+    letter-spacing: -0.065em;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  .next-project__arrow {
+    font-size: clamp(28px, 3.5vw, 48px);
+    line-height: 1;
+  }
+
+  @media (max-width: 700px) {
+    .project-page {
+      padding: 94px 20px 56px;
+    }
+
+    .project-hero__meta,
+    .project-hero__details {
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .project-hero__title {
+      margin-bottom: 30px;
+      font-size: clamp(48px, 16vw, 86px);
+    }
+
+    .project-intro {
+      grid-template-columns: 1fr;
+    }
+
+    .next-project__row {
+      grid-template-columns: 50px minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+
+    .next-project__title {
+      font-size: clamp(32px, 10vw, 56px);
+    }
+  }
+</style>

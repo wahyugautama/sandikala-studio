@@ -1,0 +1,458 @@
+/*
+ * main.css — the authored stylesheet for this starter.
+ *
+ * Convention (keeps the in-app visual editor reliable): every styled element
+ * carries ONE semantic class, and each class is defined by exactly ONE rule
+ * here. No inline styles, no utility soup. Edit a class's rule and every
+ * element using it updates. Responsive overrides go in the @media block at the
+ * bottom (one breakpoint set), mirroring the rule above it.
+ */
+
+/* ── Fonts ───────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'ABC Diatype';
+  src: url('/fonts/ABCDiatype-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Diatype Mono';
+  src: url('/fonts/ABCDiatypeMono-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Design tokens ───────────────────────────────────────────────── */
+:root {
+  --background: #faf9f7;
+  --surface: #ffffff;
+  --foreground: #1a1714;
+  --muted: #6b635b;
+  --border: #e7e2db;
+  --accent: #2f6f4f;
+  --accent-strong: #245840;
+  --font-display: 'ABC Diatype', system-ui, sans-serif;
+  --font-body: 'ABC Diatype', system-ui, sans-serif;
+  --font-mono: 'ABC Diatype Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --maxw: 1080px;
+}
+
+/* ── Base elements ───────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ── Header / nav ────────────────────────────────────────────────── */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 32px;
+  pointer-events: auto;
+}
+
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  pointer-events: auto;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2.2vw, 34px);
+}
+
+.nav-link,
+.nav-time {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.nav-link {
+  transition: opacity 0.18s ease;
+}
+
+.nav-link:hover {
+  opacity: 0.62;
+}
+
+.nav-link.is-active {
+  opacity: 0.54;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 28px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong);
+}
+
+.btn-secondary {
+  display: inline-block;
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 28px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--foreground);
+}
+
+/* ── Hero ────────────────────────────────────────────────────────── */
+.hero {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 96px 24px 72px;
+  text-align: center;
+}
+
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin: 0 auto 24px;
+  max-width: 14ch;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  color: var(--muted);
+  margin: 0 auto 36px;
+  max-width: 52ch;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+
+/* ── Features ────────────────────────────────────────────────────── */
+.features {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 40px 24px 88px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin: 0 0 48px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.feature-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.feature-text {
+  font-size: 16px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── CTA band ────────────────────────────────────────────────────── */
+.cta {
+  background: var(--accent);
+  color: #fff;
+}
+
+.cta-inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 72px 24px;
+  text-align: center;
+}
+
+.cta-title {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+}
+
+.cta-text {
+  font-size: 18px;
+  opacity: 0.9;
+  margin: 0 auto 32px;
+  max-width: 46ch;
+}
+
+.cta-button {
+  display: inline-block;
+  background: #fff;
+  color: var(--accent-strong);
+  font-weight: 700;
+  font-size: 16px;
+  padding: 14px 30px;
+  border-radius: 10px;
+}
+
+/* ── Pixel icon system ───────────────────────────────────────────── */
+.icons-page {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 128px 24px 96px;
+}
+
+.icons-header {
+  max-width: 620px;
+  margin: 0 auto 56px;
+  text-align: center;
+}
+
+.icons-title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.icons-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.icons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 22px;
+}
+
+.icon-card {
+  display: flex;
+  min-height: 198px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 30px 24px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: border-color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.icon-card:hover {
+  border-color: color-mix(in srgb, var(--foreground) 18%, var(--border));
+  opacity: 0.94;
+  transform: scale(1.02);
+}
+
+.icon-card-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.pixel-icon {
+  display: grid;
+  grid-template-columns: repeat(5, var(--pixel-size, 12px));
+  grid-template-rows: repeat(7, var(--pixel-size, 12px));
+  gap: var(--pixel-gap, 5px);
+}
+
+.pixel-cell {
+  width: var(--pixel-size, 12px);
+  height: var(--pixel-size, 12px);
+  background: transparent;
+}
+
+.pixel-cell-active {
+  background: var(--pixel-color, currentColor);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+.site-footer {
+  border-top: 1px solid var(--border);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.footer-text {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+}
+
+.footer-link {
+  font-size: 14px;
+  color: var(--muted);
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--foreground);
+}
+
+/* ── Responsive (one breakpoint set; mirror rules above) ─────────── */
+@media (max-width: 768px) {
+  .site-nav {
+    padding: 22px 20px;
+  }
+
+  .nav-logo {
+    font-size: 13px;
+  }
+
+  .nav-links {
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .nav-link,
+  .nav-time {
+    font-size: 13px;
+  }
+
+  .hero {
+    padding: 64px 20px 48px;
+  }
+
+  .hero-title {
+    font-size: 40px;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .icons-page {
+    padding: 96px 20px 72px;
+  }
+
+  .icons-title {
+    font-size: 42px;
+  }
+
+  .icons-grid {
+    grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+    gap: 16px;
+  }
+
+  .icon-card {
+    min-height: 178px;
+    padding: 26px 18px 22px;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
