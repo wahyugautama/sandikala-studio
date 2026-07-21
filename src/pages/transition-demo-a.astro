@@ -1,0 +1,28 @@
+---
+import BarbaDemoLayout from '../layouts/BarbaDemoLayout.astro';
+
+const demoImage =
+  'https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=1800&q=85';
+---
+
+<BarbaDemoLayout title="Transition Demo A" namespace="demo-a">
+  <section class="demo-page demo-page-a" aria-labelledby="demo-a-title">
+    <div class="demo-a-meta" data-page-reveal>
+      <span>Brand Identity</span>
+      <span>2026</span>
+    </div>
+
+    <a class="demo-a-image-link" href="/transition-demo-b" aria-label="View Project Atlas">
+      <figure class="demo-a-image" data-flip-id="demo-image">
+        <img src={demoImage} alt="Modern architectural courtyard for Project Atlas" width="1800" height="1200" />
+      </figure>
+    </a>
+
+    <div class="demo-a-heading">
+      <p class="demo-kicker" data-page-reveal>Selected work</p>
+      <h1 id="demo-a-title" class="demo-a-title" data-flip-id="demo-title">Project Atlas</h1>
+    </div>
+
+    <a class="demo-a-link" href="/transition-demo-b" data-page-reveal>View project</a>
+  </section>
+</BarbaDemoLayout>

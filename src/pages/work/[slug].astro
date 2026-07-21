@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { PortableText } from 'astro-portabletext';
 import { projects, type Project } from '../../data/projects';
 
 interface Props {
@@ -20,6 +21,7 @@ export function getStaticPaths() {
 const { project } = Astro.props;
 const projectIndex = projects.findIndex((item) => item.slug === project.slug);
 const nextProject = projects[(projectIndex + 1) % projects.length];
+const hasBody = Array.isArray(project.body) && project.body.length > 0;
 ---
 
 <Layout title={`${project.title} — Sandikala Studio`} description={project.intro}>
@@ -45,7 +47,15 @@ const nextProject = projects[(projectIndex + 1) % projects.length];
       </div>
       <div class="project-copy">
         <h2 class="project-copy__intro">{project.intro}</h2>
-        <p>{project.description}</p>
+        {
+          hasBody ? (
+            <div class="project-body">
+              <PortableText value={project.body} />
+            </div>
+          ) : (
+            <p>{project.description}</p>
+          )
+        }
       </div>
     </section>
 
@@ -156,11 +166,33 @@ const nextProject = projects[(projectIndex + 1) % projects.length];
     letter-spacing: -0.04em;
   }
 
-  .project-copy p {
+  .project-copy p,
+  .project-body :global(p) {
     margin: 0;
     max-width: 58ch;
     font-size: 17px;
     line-height: 1.45;
+  }
+
+  .project-body {
+    display: grid;
+    gap: 20px;
+  }
+
+  .project-body :global(h2) {
+    margin: 16px 0 0;
+    font-size: clamp(26px, 3.4vw, 42px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .project-body :global(h2:first-child) {
+    margin-top: 0;
+  }
+
+  .project-body :global(strong) {
+    font-weight: 650;
   }
 
   .project-gallery {

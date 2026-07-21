@@ -1,10 +1,11 @@
 ---
-const pathname = Astro.url.pathname;
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 
 const navItems = [
   { href: '/', label: 'Home', active: pathname === '/' },
   { href: '/about', label: 'About', active: pathname === '/about' },
   { href: '/works', label: 'Works', active: pathname.startsWith('/works') || pathname.startsWith('/work') },
+  { href: '/contact', label: 'Contact', active: pathname === '/contact' },
 ];
 ---
 
@@ -20,47 +21,6 @@ const navItems = [
         ))
       }
       <a class="nav-link" href="mailto:hello@sandikalastudio.com">Schedule a call</a>
-      <time class="nav-time" data-local-time datetime="">18:24</time>
     </div>
   </nav>
 </header>
-
-<script>
-  const setupLocalTime = () => {
-    const time = document.querySelector('[data-local-time]');
-
-    if (!(time instanceof HTMLTimeElement)) {
-      return;
-    }
-
-    if (typeof time.__localTimeCleanup === 'function') {
-      time.__localTimeCleanup();
-    }
-
-    const updateLocalTime = () => {
-      const now = new Date();
-      const formattedTime = new Intl.DateTimeFormat('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      }).format(now);
-
-      time.textContent = formattedTime;
-      time.dateTime = now.toISOString();
-    };
-
-    const interval = window.setInterval(updateLocalTime, 30000);
-    const cleanup = () => {
-      window.clearInterval(interval);
-      document.removeEventListener('astro:before-swap', cleanup);
-      delete time.__localTimeCleanup;
-    };
-
-    time.__localTimeCleanup = cleanup;
-    document.addEventListener('astro:before-swap', cleanup, { once: true });
-    updateLocalTime();
-  };
-
-  setupLocalTime();
-  document.addEventListener('astro:page-load', setupLocalTime);
-</script>

@@ -9,15 +9,31 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
 <section
   class="project-home"
   data-infinite-project-list
-  data-projects={JSON.stringify(projects)}
+  data-project-count={projects.length}
   data-copies={copies}
   aria-label="Featured projects"
 >
-  <div class="project-preview" data-project-preview aria-hidden="true">
-    <canvas class="project-preview__canvas" data-project-canvas></canvas>
+  <div class="project-preview" data-project-preview>
+    {
+      projects.map((project, index) => (
+        <a
+          class:list={['project-preview__link', index === 0 && 'is-active']}
+          href={project.href}
+          aria-label={`View ${project.title}`}
+          data-project-preview-link
+          data-project-index={index}
+        >
+          <img
+            class="project-preview__image"
+            src={project.image}
+            alt=""
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        </a>
+      ))
+    }
   </div>
-
-  <div class="project-cursor" data-project-cursor aria-hidden="true">scroll, blip, infinite</div>
 
   <div class="project-list-section">
     <div class="project-list__viewport" data-project-viewport>
@@ -29,6 +45,7 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
               <a
                 class:list={['project-item', isInitialActive && 'is-active']}
                 href={project.href}
+                data-project-index={index % projects.length}
                 aria-current={isInitialActive ? 'true' : undefined}
                 aria-hidden={String(!isInitialActive)}
                 tabindex={isInitialActive ? '0' : '-1'}
@@ -70,44 +87,34 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
     height: min(55vh, 620px);
     background: rgba(0, 0, 0, 0.025);
     transform: translate(-50%, -50%);
-    pointer-events: auto;
+    pointer-events: none;
   }
 
-  .project-preview.has-active-image {
-    background: transparent;
-  }
-
-  .project-preview__canvas {
+  .project-preview__link {
     position: absolute;
     inset: 0;
     display: block;
     width: 100%;
     height: 100%;
-  }
-
-  .project-cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 20;
-    display: block;
-    padding: 7px 9px 8px;
-    color: #f5f5f2;
-    background: var(--foreground);
-    border-radius: 999px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    line-height: 1;
-    letter-spacing: 0;
     opacity: 0;
     pointer-events: none;
-    transform: translate3d(var(--cursor-x, -80px), var(--cursor-y, -80px), 0);
+    transform: scale(0.985);
     transition:
-      opacity 0.16s ease,
-      background 0.18s ease,
-      color 0.18s ease;
-    white-space: nowrap;
-    will-change: transform;
+      opacity 0.28s ease,
+      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .project-preview__link.is-active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  .project-preview__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .project-list-section {
@@ -227,10 +234,6 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
   }
 
   @media (hover: none) {
-    .project-cursor {
-      display: none;
-    }
-
     .project-arrow {
       display: none;
     }
@@ -244,92 +247,6 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
 <script>
   const projectListSelector = '[data-infinite-project-list]';
 
-  const vertexShader = `
-    varying vec2 vUv;
-    uniform float uDirection;
-    uniform float uProgress;
-    uniform float uReducedMotion;
-
-    void main() {
-      vUv = uv;
-      vec3 pos = position;
-      float wave = sin((uv.y + uProgress * 0.6) * 3.14159265);
-      pos.y += wave * uDirection * (1.0 - uReducedMotion) * 0.035 * sin(uProgress * 3.14159265);
-      gl_Position = vec4(pos, 1.0);
-    }
-  `;
-
-  const fragmentShader = `
-    precision highp float;
-
-    varying vec2 vUv;
-
-    uniform sampler2D uFromTexture;
-    uniform sampler2D uToTexture;
-    uniform vec2 uFromTextureSize;
-    uniform vec2 uToTextureSize;
-    uniform vec2 uPlaneSize;
-    uniform float uProgress;
-    uniform float uReducedMotion;
-    uniform float uSeed;
-
-    float random(vec2 value) {
-      return fract(sin(dot(value, vec2(127.1, 311.7)) + uSeed) * 43758.5453123);
-    }
-
-    vec3 containUv(vec2 uv, vec2 textureSize, vec2 planeSize, out float alpha) {
-      float textureAspect = textureSize.x / textureSize.y;
-      float planeAspect = planeSize.x / planeSize.y;
-      vec2 scale = vec2(1.0);
-
-      if (textureAspect > planeAspect) {
-        scale.y = planeAspect / textureAspect;
-      } else {
-        scale.x = textureAspect / planeAspect;
-      }
-
-      vec2 minUv = (1.0 - scale) * 0.5;
-      vec2 maxUv = minUv + scale;
-      vec2 inside = step(minUv, uv) * step(uv, maxUv);
-      alpha = inside.x * inside.y;
-      return vec3((uv - minUv) / scale, alpha);
-    }
-
-    vec2 pixelateUv(vec2 uv, float progress) {
-      float strength = sin(progress * 3.14159265);
-      float blockAmount = mix(180.0, 18.0, strength);
-      vec2 grid = vec2(blockAmount);
-      vec2 blockedUv = (floor(uv * grid) + 0.5) / grid;
-      return mix(uv, blockedUv, strength);
-    }
-
-    void main() {
-      float fromAlpha;
-      float toAlpha;
-      vec3 fromData = containUv(vUv, uFromTextureSize, uPlaneSize, fromAlpha);
-      vec3 toData = containUv(vUv, uToTextureSize, uPlaneSize, toAlpha);
-      vec2 fromUv = fromData.xy;
-      vec2 toUv = toData.xy;
-
-      if (uReducedMotion < 0.5) {
-        fromUv = pixelateUv(fromUv, uProgress);
-        toUv = pixelateUv(toUv, uProgress);
-      }
-
-      vec4 fromColor = texture2D(uFromTexture, fromUv) * fromAlpha;
-      vec4 toColor = texture2D(uToTexture, toUv) * toAlpha;
-      float blend = uProgress;
-
-      if (uReducedMotion < 0.5) {
-        vec2 block = floor(vUv * 28.0);
-        float threshold = random(block);
-        blend = smoothstep(threshold - 0.18, threshold + 0.18, uProgress);
-      }
-
-      gl_FragColor = mix(fromColor, toColor, blend);
-    }
-  `;
-
   const initInfiniteProjectList = (root) => {
     if (!(root instanceof HTMLElement)) {
       return;
@@ -341,23 +258,21 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
 
     const track = root.querySelector('[data-project-track]');
     const preview = root.querySelector('[data-project-preview]');
-    const canvas = root.querySelector('[data-project-canvas]');
-    const cursor = root.querySelector('[data-project-cursor]');
+    const previewLinks = Array.from(root.querySelectorAll('[data-project-preview-link]'));
     const items = Array.from(root.querySelectorAll('.project-item'));
-    const projects = JSON.parse(root.dataset.projects || '[]');
+    const projectCount = Number(root.dataset.projectCount || previewLinks.length);
     const copies = Number(root.dataset.copies || 9);
 
     if (
       !(track instanceof HTMLElement) ||
       !(preview instanceof HTMLElement) ||
-      !(canvas instanceof HTMLCanvasElement) ||
-      projects.length === 0 ||
+      previewLinks.length === 0 ||
+      projectCount === 0 ||
       items.length === 0
     ) {
       return;
     }
 
-    const projectCount = projects.length;
     const middleCopy = Math.floor(copies / 2);
     let itemHeight = 70;
     let currentIndex = middleCopy * projectCount;
@@ -373,22 +288,7 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
     let dragStartTargetY = 0;
     let activePointerId = null;
     let suppressNextClick = false;
-    let cursorX = -80;
-    let cursorY = -80;
-    let cursorTargetX = -80;
-    let cursorTargetY = -80;
-    let renderer = null;
-    let scene = null;
-    let camera = null;
-    let material = null;
-    let mesh = null;
-    let fallbackTexture = null;
-    let three = null;
-    let currentTextureIndex = 0;
-    let transition = null;
     let transitionDirection = 1;
-    const textures = [];
-    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     const wheelThreshold = 24;
     const wheelCooldown = 80;
@@ -397,78 +297,14 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
 
     const getRenderedIndex = (index) => ((index % items.length) + items.length) % items.length;
 
-    const getTexture = (projectIndex) => textures[projectIndex]?.texture || null;
+    const updateActiveImage = (projectIndex) => {
+      previewLinks.forEach((link) => {
+        if (!(link instanceof HTMLElement)) {
+          return;
+        }
 
-    const updateTextureUniform = (uniformName, sizeUniformName, texture) => {
-      if (!material || !texture) {
-        return;
-      }
-
-      material.uniforms[uniformName].value = texture;
-      material.uniforms[sizeUniformName].value.set(
-        texture.image?.naturalWidth || texture.image?.width || 1,
-        texture.image?.naturalHeight || texture.image?.height || 1
-      );
-    };
-
-    const completeTransition = () => {
-      if (!transition || !material) {
-        return;
-      }
-
-      const nextTexture = getTexture(transition.to);
-
-      if (nextTexture) {
-        currentTextureIndex = transition.to;
-        updateTextureUniform('uFromTexture', 'uFromTextureSize', nextTexture);
-        updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
-        material.uniforms.uProgress.value = 1;
-        preview.classList.add('has-active-image');
-      }
-
-      transition = null;
-    };
-
-    const updateActiveImage = (projectIndex, direction = 1) => {
-      if (!material) {
-        currentTextureIndex = projectIndex;
-        return;
-      }
-
-      const nextTexture = getTexture(projectIndex);
-      const currentTexture = getTexture(currentTextureIndex);
-
-      if (!nextTexture) {
-        return;
-      }
-
-      if (!currentTexture) {
-        currentTextureIndex = projectIndex;
-        updateTextureUniform('uFromTexture', 'uFromTextureSize', nextTexture);
-        updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
-        material.uniforms.uProgress.value = 1;
-        preview.classList.add('has-active-image');
-        return;
-      }
-
-      if (projectIndex === currentTextureIndex && !transition) {
-        return;
-      }
-
-      completeTransition();
-      transitionDirection = direction || 1;
-      updateTextureUniform('uFromTexture', 'uFromTextureSize', currentTexture);
-      updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
-      material.uniforms.uProgress.value = 0;
-      material.uniforms.uDirection.value = transitionDirection;
-      material.uniforms.uSeed.value = Math.random() * 1000;
-      material.uniforms.uReducedMotion.value = reducedMotionQuery.matches ? 1 : 0;
-      transition = {
-        to: projectIndex,
-        start: performance.now(),
-        duration: reducedMotionQuery.matches ? 320 : 680,
-      };
-      preview.classList.add('has-active-image');
+        link.classList.toggle('is-active', Number(link.dataset.projectIndex) === projectIndex);
+      });
     };
 
     const setActiveProject = (index, direction = 1) => {
@@ -494,7 +330,8 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
       }
 
       activeProjectIndex = projectIndex;
-      updateActiveImage(projectIndex, direction);
+      transitionDirection = direction || 1;
+      updateActiveImage(projectIndex);
     };
 
     const setTrackPosition = () => {
@@ -542,175 +379,29 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
       snapToIndex(currentIndex + direction, direction);
     };
 
-    const renderPreview = () => {
-      if (!renderer || !scene || !camera || !material) {
-        return;
-      }
-
-      if (transition) {
-        const elapsed = performance.now() - transition.start;
-        const rawProgress = Math.min(elapsed / transition.duration, 1);
-        const easedProgress = 1 - Math.pow(1 - rawProgress, 3);
-        material.uniforms.uProgress.value = easedProgress;
-        material.uniforms.uDirection.value = transitionDirection;
-        material.uniforms.uReducedMotion.value = reducedMotionQuery.matches ? 1 : 0;
-
-        if (rawProgress >= 1) {
-          const nextTexture = getTexture(transition.to);
-
-          if (nextTexture) {
-            currentTextureIndex = transition.to;
-            updateTextureUniform('uFromTexture', 'uFromTextureSize', nextTexture);
-            updateTextureUniform('uToTexture', 'uToTextureSize', nextTexture);
-            material.uniforms.uProgress.value = 1;
-          }
-
-          transition = null;
-        }
-      }
-
-      renderer.render(scene, camera);
-    };
-
     const animate = () => {
       recenterIfNeeded();
       currentY += (targetY - currentY) * 0.16;
-      cursorX += (cursorTargetX - cursorX) * 0.22;
-      cursorY += (cursorTargetY - cursorY) * 0.22;
 
       if (Math.abs(targetY - currentY) < 0.02) {
         currentY = targetY;
       }
 
       setTrackPosition();
-      renderPreview();
-
-      if (cursor instanceof HTMLElement) {
-        cursor.style.setProperty('--cursor-x', `${cursorX}px`);
-        cursor.style.setProperty('--cursor-y', `${cursorY}px`);
-      }
 
       animationFrame = window.requestAnimationFrame(animate);
     };
 
     const measure = () => {
       const activeProject = getProjectIndex(currentIndex);
-      const previewRect = preview.getBoundingClientRect();
       itemHeight = Math.max(48, Math.min(window.innerWidth * 0.05, 70));
       root.style.setProperty('--item-height', `${itemHeight}px`);
-
-      if (renderer && material) {
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.setSize(Math.max(1, previewRect.width), Math.max(1, previewRect.height), false);
-        material.uniforms.uPlaneSize.value.set(
-          Math.max(1, previewRect.width),
-          Math.max(1, previewRect.height)
-        );
-      }
 
       currentIndex = middleCopy * projectCount + activeProject;
       syncTargetToIndex();
       currentY = targetY;
       setTrackPosition();
       setActiveProject(currentIndex, transitionDirection);
-    };
-
-    const setupPreview = async () => {
-      three = await import('three');
-
-      if (!root.isConnected) {
-        return;
-      }
-
-      const {
-        DataTexture,
-        LinearFilter,
-        Mesh,
-        OrthographicCamera,
-        PlaneGeometry,
-        RGBAFormat,
-        SRGBColorSpace,
-        Scene,
-        ShaderMaterial,
-        TextureLoader,
-        Vector2,
-        WebGLRenderer,
-      } = three;
-
-      fallbackTexture = new DataTexture(new Uint8Array([245, 245, 242, 0]), 1, 1, RGBAFormat);
-      fallbackTexture.needsUpdate = true;
-
-      renderer = new WebGLRenderer({
-        canvas,
-        alpha: true,
-        antialias: true,
-        premultipliedAlpha: false,
-      });
-      renderer.setClearColor(0x000000, 0);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-
-      scene = new Scene();
-      camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-      material = new ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        transparent: true,
-        depthTest: false,
-        depthWrite: false,
-        uniforms: {
-          uFromTexture: { value: fallbackTexture },
-          uToTexture: { value: fallbackTexture },
-          uFromTextureSize: { value: new Vector2(1, 1) },
-          uToTextureSize: { value: new Vector2(1, 1) },
-          uPlaneSize: { value: new Vector2(1, 1) },
-          uProgress: { value: 1 },
-          uReducedMotion: { value: reducedMotionQuery.matches ? 1 : 0 },
-          uDirection: { value: 1 },
-          uSeed: { value: Math.random() * 1000 },
-        },
-      });
-
-      mesh = new Mesh(new PlaneGeometry(2, 2, 1, 24), material);
-      scene.add(mesh);
-
-      const loader = new TextureLoader();
-      loader.setCrossOrigin('anonymous');
-      projects.forEach((project, projectIndex) => {
-        textures[projectIndex] = {
-          texture: null,
-          failed: false,
-        };
-
-        loader.load(
-          project.image,
-          (texture) => {
-            texture.colorSpace = SRGBColorSpace;
-            texture.minFilter = LinearFilter;
-            texture.magFilter = LinearFilter;
-            texture.generateMipmaps = false;
-            texture.needsUpdate = true;
-            textures[projectIndex].texture = texture;
-
-            if (projectIndex === currentTextureIndex) {
-              updateTextureUniform('uFromTexture', 'uFromTextureSize', texture);
-              updateTextureUniform('uToTexture', 'uToTextureSize', texture);
-              material.uniforms.uProgress.value = 1;
-              preview.classList.add('has-active-image');
-            }
-
-            if (projectIndex === activeProjectIndex) {
-              updateActiveImage(projectIndex, transitionDirection);
-            }
-          },
-          undefined,
-          () => {
-            textures[projectIndex].failed = true;
-          }
-        );
-      });
-
-      measure();
-      renderPreview();
     };
 
     const onWheel = (event) => {
@@ -730,6 +421,11 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
 
     const onPointerDown = (event) => {
       if (event.button !== undefined && event.button !== 0) {
+        return;
+      }
+
+      if (event.target instanceof Element && event.target.closest('a')) {
+        suppressNextClick = false;
         return;
       }
 
@@ -776,13 +472,13 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
     };
 
     const onClick = (event) => {
-      const link = event.target instanceof Element ? event.target.closest('.project-item') : null;
+      const link = event.target instanceof Element ? event.target.closest('a') : null;
 
       if (!(link instanceof HTMLAnchorElement)) {
         return;
       }
 
-      if (suppressNextClick) {
+      if (isDragging || suppressNextClick) {
         event.preventDefault();
       }
 
@@ -801,80 +497,27 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
       }
     };
 
-    const onCursorMove = (event) => {
-      if (!(cursor instanceof HTMLElement) || event.pointerType === 'touch') {
-        return;
-      }
-
-      cursorTargetX = event.clientX + 14;
-      cursorTargetY = event.clientY + 14;
-      cursor.style.opacity = '1';
-    };
-
-    const onCursorLeave = () => {
-      if (cursor instanceof HTMLElement) {
-        cursor.style.opacity = '0';
-      }
-    };
-
-    const setCursorText = (text) => {
-      if (cursor instanceof HTMLElement) {
-        cursor.textContent = text;
-      }
-    };
-
-    const onViewTargetEnter = () => {
-      setCursorText('view');
-    };
-
-    const onViewTargetLeave = () => {
-      setCursorText('scroll, blip, infinite');
-    };
-
     const cleanup = () => {
       window.cancelAnimationFrame(animationFrame);
       root.removeEventListener('wheel', onWheel);
       root.removeEventListener('pointerdown', onPointerDown);
       root.removeEventListener('pointermove', onPointerMove);
-      root.removeEventListener('pointermove', onCursorMove);
       root.removeEventListener('pointerup', endDrag);
       root.removeEventListener('pointercancel', endDrag);
-      root.removeEventListener('pointerleave', onCursorLeave);
       root.removeEventListener('click', onClick);
-      preview.removeEventListener('pointerenter', onViewTargetEnter);
-      preview.removeEventListener('pointerleave', onViewTargetLeave);
-      items.forEach((item) => {
-        item.removeEventListener('pointerenter', onViewTargetEnter);
-        item.removeEventListener('pointerleave', onViewTargetLeave);
-      });
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('resize', measure);
       document.removeEventListener('astro:before-swap', cleanup);
       root.classList.remove('is-dragging');
-      textures.forEach((entry) => {
-        entry?.texture?.dispose();
-      });
-      fallbackTexture?.dispose();
-      mesh?.geometry?.dispose();
-      material?.dispose();
-      renderer?.dispose();
       delete root.__infiniteProjectListCleanup;
     };
 
     root.addEventListener('wheel', onWheel, { passive: false });
     root.addEventListener('pointerdown', onPointerDown);
     root.addEventListener('pointermove', onPointerMove);
-    root.addEventListener('pointermove', onCursorMove);
     root.addEventListener('pointerup', endDrag);
     root.addEventListener('pointercancel', endDrag);
-    root.addEventListener('pointerleave', onCursorLeave);
     root.addEventListener('click', onClick);
-    preview.addEventListener('pointerenter', onViewTargetEnter);
-    preview.addEventListener('pointerleave', onViewTargetLeave);
-    items.forEach((item) => {
-      item.addEventListener('pointerenter', onViewTargetEnter);
-      item.addEventListener('pointerleave', onViewTargetLeave);
-    });
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('resize', measure);
     document.addEventListener('astro:before-swap', cleanup, { once: true });
@@ -882,7 +525,6 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
     root.__infiniteProjectListCleanup = cleanup;
 
     measure();
-    setupPreview();
     animationFrame = window.requestAnimationFrame(animate);
   };
 

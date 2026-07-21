@@ -14,6 +14,14 @@ const {
   description = 'Sandikala Studio.',
   hideFooter = false,
 } = Astro.props;
+
+const pathname = Astro.url.pathname;
+const namespace =
+  pathname === '/'
+    ? 'home'
+    : pathname.startsWith('/work/')
+      ? 'work-detail'
+      : pathname.replace(/^\/|\/$/g, '') || 'page';
 ---
 
 <!doctype html>
@@ -32,11 +40,14 @@ const {
     <meta name="description" content={description} />
     <title>{title}</title>
   </head>
-  <body>
+  <body data-barba="wrapper">
     <Header />
-    <main>
+    <main class="page-container" data-barba="container" data-barba-namespace={namespace} tabindex="-1">
       <slot />
+      {!hideFooter && <Footer />}
     </main>
-    {!hideFooter && <Footer />}
+    <script>
+      import '/src/scripts/page-transitions.ts';
+    </script>
   </body>
 </html>

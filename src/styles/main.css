@@ -60,6 +60,36 @@ a {
   text-decoration: none;
 }
 
+.page-container {
+  min-height: 100svh;
+}
+
+.page-container.contact-transition,
+.page-container.contact__transition {
+  isolation: isolate;
+}
+
+.page-container.contact-transition::before,
+.page-container.contact__transition::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: var(--contact-transition-overlay, #020403);
+  clip-path: var(--contact-overlay-clip, inset(0 0 100% 0));
+  will-change: clip-path;
+}
+
+body.is-transitioning {
+  cursor: progress;
+}
+
+body.is-transitioning a,
+body.is-transitioning button {
+  pointer-events: none;
+}
+
 /* ── Header / nav ────────────────────────────────────────────────── */
 .site-header {
   position: fixed;
@@ -92,8 +122,7 @@ a {
   gap: clamp(18px, 2.2vw, 34px);
 }
 
-.nav-link,
-.nav-time {
+.nav-link {
   display: inline-flex;
   align-items: center;
   font-size: 14px;
@@ -408,9 +437,12 @@ a {
     justify-content: flex-end;
   }
 
-  .nav-link,
-  .nav-time {
+  .nav-link {
     font-size: 13px;
+  }
+
+  .site-nav {
+    gap: 12px;
   }
 
   .hero {
@@ -454,5 +486,18 @@ a {
   .footer-inner {
     flex-direction: column;
     gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-nav {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav-links {
+    gap: 16px;
+    justify-content: flex-start;
   }
 }

@@ -1,3 +1,5 @@
+import { sanityClient, urlFor } from '../lib/sanity';
+
 export interface Project {
   number: string;
   title: string;
@@ -10,9 +12,28 @@ export interface Project {
   intro: string;
   description: string;
   gallery: string[];
+  body?: unknown[];
+  client?: string;
+  featured?: boolean;
 }
 
-export const projects: Project[] = [
+interface SanityProject {
+  _id: string;
+  title?: string;
+  slug?: {
+    current?: string;
+  };
+  client?: string;
+  year?: number | string;
+  industry?: string;
+  services?: string[];
+  coverImage?: unknown;
+  summary?: string;
+  body?: unknown[];
+  featured?: boolean;
+}
+
+const fallbackProjects: Project[] = [
   {
     number: '01',
     title: 'Adidas',
@@ -141,3 +162,73 @@ export const projects: Project[] = [
     ],
   },
 ];
+
+const projectsQuery = `*[_type == "project" && defined(slug.current)] | order(coalesce(year, 0) desc, _createdAt desc) {
+  _id,
+  title,
+  slug,
+  client,
+  year,
+  industry,
+  services,
+  coverImage,
+  summary,
+  body,
+  featured
+}`;
+
+function formatProjectNumber(index: number) {
+  return String(index + 1).padStart(2, '0');
+}
+
+function getFallbackProject(index: number) {
+  return fallbackProjects[index % fallbackProjects.length];
+}
+
+function getImageUrl(project: SanityProject, fallback: Project) {
+  if (!project.coverImage) {
+    return fallback.image;
+  }
+
+  return urlFor(project.coverImage).width(1800).quality(85).auto('format').url();
+}
+
+function mapSanityProject(project: SanityProject, index: number): Project {
+  const fallback = getFallbackProject(index);
+  const slug = project.slug?.current || fallback.slug;
+  const image = getImageUrl(project, fallback);
+
+  return {
+    number: formatProjectNumber(index),
+    title: project.title || fallback.title,
+    slug,
+    href: `/work/${slug}`,
+    image,
+    year: project.year ? String(project.year) : fallback.year,
+    category: project.industry || fallback.category,
+    services: Array.isArray(project.services) && project.services.length > 0 ? project.services : fallback.services,
+    intro: project.summary || fallback.intro,
+    description: project.summary || fallback.description,
+    gallery: [image],
+    body: Array.isArray(project.body) ? project.body : undefined,
+    client: project.client,
+    featured: project.featured,
+  };
+}
+
+async function getProjects(): Promise<Project[]> {
+  try {
+    const sanityProjects = await sanityClient.fetch<SanityProject[]>(projectsQuery);
+
+    if (!Array.isArray(sanityProjects) || sanityProjects.length === 0) {
+      return fallbackProjects;
+    }
+
+    return sanityProjects.map(mapSanityProject);
+  } catch (error) {
+    console.warn('Unable to fetch Sanity projects. Using local fallback projects.', error);
+    return fallbackProjects;
+  }
+}
+
+export const projects = await getProjects();
