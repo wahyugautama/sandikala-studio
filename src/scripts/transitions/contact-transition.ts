@@ -38,9 +38,6 @@ const cleanupContactContainer = (container: HTMLElement) => {
 
 export const createContactTransition = (): barba.Transition => ({
   name: 'example-6-transition',
-  to: {
-    namespace: ['contact'],
-  },
   sync: true,
   before(data) {
     document.body.classList.add('is-transitioning');

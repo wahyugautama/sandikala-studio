@@ -8,10 +8,6 @@ declare global {
   }
 }
 
-type BarbaData = Parameters<NonNullable<Parameters<typeof barba.hooks.beforeLeave>[0]>>[0];
-
-const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 const resetScroll = () => {
   if ('scrollRestoration' in window.history) {
     window.history.scrollRestoration = 'manual';
@@ -140,39 +136,6 @@ export const initPage = (container?: HTMLElement | null) => {
   });
 };
 
-const createDefaultTransition = () => ({
-  name: 'sandikala-default-transition',
-  once() {
-    resetScroll();
-    updateActiveNavigation();
-  },
-  leave(data: BarbaData) {
-    if (reduceMotion()) {
-      return gsap.to(data.current.container, { autoAlpha: 0, duration: 0.12, ease: 'none' });
-    }
-
-    return gsap.to(data.current.container, {
-      autoAlpha: 0,
-      y: -18,
-      duration: 0.28,
-      ease: 'power2.out',
-    });
-  },
-  enter(data: BarbaData) {
-    resetScroll();
-
-    if (reduceMotion()) {
-      return gsap.fromTo(data.next.container, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.12, ease: 'none' });
-    }
-
-    return gsap.fromTo(
-      data.next.container,
-      { autoAlpha: 0, y: 18 },
-      { autoAlpha: 1, y: 0, duration: 0.34, ease: 'power2.out', clearProps: 'opacity,visibility,transform' }
-    );
-  },
-});
-
 const initBarba = () => {
   if (window.__sandikalaBarbaInitialized) {
     return;
@@ -217,7 +180,7 @@ const initBarba = () => {
 
       return isPreventedLink(el);
     },
-    transitions: [createContactTransition(), createDefaultTransition()],
+    transitions: [createContactTransition()],
   });
 
   resetScroll();
