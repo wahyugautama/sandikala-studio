@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { PortableText } from 'astro-portabletext';
 import { projects, type Project } from '../../data/projects';
+import { urlFor } from '../../lib/sanity';
 
 interface Props {
   project: Project;
@@ -21,60 +21,90 @@ export function getStaticPaths() {
 const { project } = Astro.props;
 const projectIndex = projects.findIndex((item) => item.slug === project.slug);
 const nextProject = projects[(projectIndex + 1) % projects.length];
-const hasBody = Array.isArray(project.body) && project.body.length > 0;
+const galleryImages = project.imageGallery ?? [];
+
+function getGalleryImageUrl(image: NonNullable<Project['imageGallery']>[number]) {
+  if (image.url) {
+    return image.url;
+  }
+
+  if (!image.asset?._ref) {
+    return '';
+  }
+
+  return urlFor(image).width(1800).quality(85).auto('format').url();
+}
+
+const gallery = galleryImages
+  .map((image) => ({
+    src: getGalleryImageUrl(image),
+    alt: image.alt || '',
+  }))
+  .filter((image) => image.src);
 ---
 
-<Layout title={`${project.title} — Sandikala Studio`} description={project.intro}>
+<Layout title={`${project.clientName} — Sandikala Studio`} description={project.projectOverview}>
   <article class="project-page">
     <header class="project-hero">
-      <div class="project-hero__meta">
-        <p class="project-hero__number">{project.number}</p>
-        <div class="project-hero__details">
-          <p>{project.year}</p>
-          <p>{project.category}</p>
-        </div>
-      </div>
-      <h1 class="project-hero__title">{project.title}</h1>
-      <img class="project-hero__image" src={project.image} alt={`${project.title} project image`} />
+      <h1 class="project-hero__title">{project.clientName}</h1>
     </header>
 
-    <section class="project-intro" aria-label="Project introduction">
-      <div class="project-services">
-        <h2 class="project-section-label">Services</h2>
-        <ul class="project-services__list">
-          {project.services.map((service) => <li>{service}</li>)}
-        </ul>
+    <figure class="project-main-image">
+      <img
+        class="project-hero__image"
+        src={project.mainImageUrl}
+        alt={project.mainImage.alt || ''}
+        loading="eager"
+        decoding="async"
+      />
+    </figure>
+
+    <dl class="project-meta">
+      <div>
+        <dt>Year</dt>
+        <dd>{project.year}</dd>
       </div>
-      <div class="project-copy">
-        <h2 class="project-copy__intro">{project.intro}</h2>
-        {
-          hasBody ? (
-            <div class="project-body">
-              <PortableText value={project.body} />
-            </div>
-          ) : (
-            <p>{project.description}</p>
-          )
-        }
+      <div>
+        <dt>Industry</dt>
+        <dd>{project.industry}</dd>
       </div>
+      <div>
+        <dt>Services</dt>
+        <dd>{project.services.join(', ')}</dd>
+      </div>
+    </dl>
+
+    <section class="project-overview" aria-label="Project overview">
+      <p>{project.projectOverview}</p>
     </section>
 
-    <section class="project-gallery" aria-label={`${project.title} gallery`}>
-      {
-        project.gallery.map((image, index) => (
-          <img src={image} alt={`${project.title} gallery image ${index + 1}`} />
-        ))
-      }
-    </section>
+    {
+      gallery.length > 0 && (
+        <section class="project-gallery" aria-label={`${project.clientName} gallery`}>
+          {gallery.map((image) => (
+            <img
+              src={image.src}
+              alt={image.alt}
+              loading="lazy"
+              decoding="async"
+            />
+          ))}
+        </section>
+      )
+    }
 
-    <a class="next-project" href={nextProject.href}>
-      <span class="next-project__label">Next project</span>
-      <span class="next-project__row">
-        <span class="next-project__number">{nextProject.number}</span>
-        <span class="next-project__title">{nextProject.title}</span>
-        <span class="next-project__arrow" aria-hidden="true">&gt;</span>
-      </span>
-    </a>
+    {
+      nextProject && (
+        <a class="next-project" href={nextProject.href}>
+          <span class="next-project__label">Next project</span>
+          <span class="next-project__row">
+            <span class="next-project__number">{nextProject.number}</span>
+            <span class="next-project__title">{nextProject.clientName}</span>
+            <span class="next-project__arrow" aria-hidden="true">&gt;</span>
+          </span>
+        </a>
+      )
+    }
   </article>
 </Layout>
 
@@ -85,35 +115,8 @@ const hasBody = Array.isArray(project.body) && project.body.length > 0;
   }
 
   .project-hero {
-    max-width: 1180px;
+    max-width: 100%;
     margin: 0 auto;
-  }
-
-  .project-hero__meta {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-    margin-bottom: 28px;
-    font-size: 14px;
-    line-height: 1.2;
-  }
-
-  .project-hero__number,
-  .project-hero__details p {
-    margin: 0;
-  }
-
-  .project-hero__number {
-    font-family: var(--font-mono);
-    font-weight: 650;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .project-hero__details {
-    display: flex;
-    gap: clamp(24px, 6vw, 96px);
-    text-align: right;
   }
 
   .project-hero__title {
@@ -124,75 +127,53 @@ const hasBody = Array.isArray(project.body) && project.body.length > 0;
     letter-spacing: 0;
   }
 
+  .project-main-image {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
   .project-hero__image {
     display: block;
     width: 100%;
     height: auto;
   }
 
-  .project-intro {
+  .project-meta {
     display: grid;
-    grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
-    gap: clamp(40px, 8vw, 140px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
     max-width: 1180px;
-    margin: clamp(70px, 10vw, 140px) auto;
+    margin: clamp(52px, 8vw, 96px) auto;
   }
 
-  .project-section-label {
-    margin: 0 0 18px;
-    font-size: 14px;
-    font-weight: 400;
-  }
-
-  .project-services__list {
+  .project-meta div {
     display: grid;
-    gap: 7px;
-    padding: 0;
+    gap: 8px;
+  }
+
+  .project-meta dt {
     margin: 0;
-    list-style: none;
     font-size: 14px;
-    line-height: 1.25;
+    color: var(--muted);
   }
 
-  .project-copy {
-    max-width: 780px;
+  .project-meta dd {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.35;
   }
 
-  .project-copy__intro {
-    margin: 0 0 28px;
-    font-size: clamp(28px, 4vw, 54px);
-    font-weight: 400;
-    line-height: 0.98;
-    letter-spacing: -0.04em;
+  .project-overview {
+    max-width: 1180px;
+    margin: 0 auto clamp(70px, 10vw, 140px);
   }
 
-  .project-copy p,
-  .project-body :global(p) {
+  .project-overview p {
     margin: 0;
     max-width: 58ch;
     font-size: 17px;
     line-height: 1.45;
-  }
-
-  .project-body {
-    display: grid;
-    gap: 20px;
-  }
-
-  .project-body :global(h2) {
-    margin: 16px 0 0;
-    font-size: clamp(26px, 3.4vw, 42px);
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: -0.04em;
-  }
-
-  .project-body :global(h2:first-child) {
-    margin-top: 0;
-  }
-
-  .project-body :global(strong) {
-    font-weight: 650;
+    white-space: pre-line;
   }
 
   .project-gallery {
@@ -257,19 +238,13 @@ const hasBody = Array.isArray(project.body) && project.body.length > 0;
       padding: 94px 1.5rem 56px;
     }
 
-    .project-hero__meta,
-    .project-hero__details {
-      flex-direction: column;
-      gap: 8px;
-      text-align: left;
-    }
-
     .project-hero__title {
       margin-bottom: 30px;
     }
 
-    .project-intro {
+    .project-meta {
       grid-template-columns: 1fr;
+      margin: 42px auto 56px;
     }
 
     .next-project__row {

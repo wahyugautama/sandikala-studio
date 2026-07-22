@@ -13,8 +13,8 @@ import { projects } from '../data/projects';
         projects.map((project) => (
           <a class="works-item" href={project.href}>
             <span class="works-item__number">{project.number}</span>
-            <span class="works-item__title">{project.title}</span>
-            <span class="works-item__meta">{project.year} / {project.category}</span>
+            <span class="works-item__title">{project.clientName}</span>
+            <span class="works-item__meta">{project.year} / {project.industry}</span>
           </a>
         ))
       }

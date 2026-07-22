@@ -1,6 +1,12 @@
+---
+import Logo from './Logo.astro';
+---
+
 <header class="site-header">
   <nav class="site-nav" aria-label="Primary navigation">
-    <a class="nav-logo" href="/">Sandikala Studio</a>
+    <a class="nav-logo" href="/" aria-label="Sandikala Studio">
+      <Logo />
+    </a>
     <a
       class="nav-toggle nav-toggle--open"
       href="#nav-overlay"

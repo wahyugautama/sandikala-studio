@@ -19,14 +19,14 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
         <a
           class:list={['project-preview__link', index === 0 && 'is-active']}
           href={project.href}
-          aria-label={`View ${project.title}`}
+          aria-label={`View ${project.clientName}`}
           data-project-preview-link
           data-project-index={index}
         >
           <img
             class="project-preview__image"
-            src={project.image}
-            alt=""
+            src={project.mainImageUrl}
+            alt={project.mainImage.alt || ''}
             loading={index === 0 ? 'eager' : 'lazy'}
             decoding="async"
           />
@@ -51,7 +51,7 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
                 tabindex={isInitialActive ? '0' : '-1'}
               >
                 <span class="project-number">{project.number}</span>
-                <span class="project-title">{project.title}</span>
+                <span class="project-title">{project.clientName}</span>
                 <span class="project-arrow" aria-hidden="true">&gt;</span>
               </a>
             );
