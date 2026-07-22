@@ -67,7 +67,7 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
     position: relative;
     min-height: 100svh;
     overflow: hidden;
-    padding: 88px 24px 112px;
+    padding: 88px 1.5rem 112px;
     color: var(--foreground);
     background: #f5f5f2;
     touch-action: none;
@@ -122,7 +122,7 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
     left: 0;
     right: 0;
     bottom: clamp(14px, 2vw, 28px);
-    padding: 0 24px;
+    padding: 0 1.5rem;
   }
 
   .project-list__viewport {
@@ -143,14 +143,14 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
     grid-template-columns: 68px minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
-    padding: 0 20px;
+    padding: 0 1.5rem;
     color: inherit;
     text-decoration: none;
   }
 
   .project-number,
   .project-arrow {
-    font-family: 'Doto', sans-serif;
+    font-family: var(--font-mono);
     font-weight: 650;
     font-variant-numeric: tabular-nums;
   }
@@ -205,7 +205,7 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
 
   @media (max-width: 700px) {
     .project-home {
-      padding: 78px 20px 96px;
+      padding: 78px 1.5rem 96px;
     }
 
     .project-preview {
@@ -215,13 +215,13 @@ const repeatedProjects = Array.from({ length: copies }, () => projects).flat();
 
     .project-list-section {
       bottom: 16px;
-      padding: 0 20px;
+      padding: 0 1.5rem;
     }
 
     .project-item {
       grid-template-columns: 50px minmax(0, 1fr) auto;
       gap: 8px;
-      padding: 0 10px;
+      padding: 0 1.5rem;
     }
 
     .project-number {

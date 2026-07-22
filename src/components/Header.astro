@@ -1,26 +1,93 @@
----
-const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
-
-const navItems = [
-  { href: '/', label: 'Home', active: pathname === '/' },
-  { href: '/about', label: 'About', active: pathname === '/about' },
-  { href: '/works', label: 'Works', active: pathname.startsWith('/works') || pathname.startsWith('/work') },
-  { href: '/contact', label: 'Contact', active: pathname === '/contact' },
-];
----
-
 <header class="site-header">
   <nav class="site-nav" aria-label="Primary navigation">
     <a class="nav-logo" href="/">Sandikala Studio</a>
-    <div class="nav-links">
-      {
-        navItems.map((item) => (
-          <a class:list={['nav-link', item.active && 'is-active']} href={item.href} aria-current={item.active ? 'page' : undefined}>
-            {item.label}
-          </a>
-        ))
-      }
+    <a
+      class="nav-toggle nav-toggle--open"
+      href="#nav-overlay"
+      aria-label="Open menu"
+      aria-controls="nav-overlay"
+      onclick="document.querySelector('.site-header')?.classList.add('is-overlay-open'); document.body.classList.add('is-nav-open'); document.querySelector('#nav-overlay')?.setAttribute('aria-hidden', 'false'); return false;"
+    >
+      <span class="nav-toggle__line"></span>
+      <span class="nav-toggle__line"></span>
+    </a>
+    <a
+      class="nav-toggle nav-toggle--close"
+      href="#"
+      aria-label="Close menu"
+      aria-controls="nav-overlay"
+      onclick="document.querySelector('.site-header')?.classList.remove('is-overlay-open'); document.body.classList.remove('is-nav-open'); document.querySelector('#nav-overlay')?.setAttribute('aria-hidden', 'true'); return false;"
+    >
+      <span class="nav-toggle__line"></span>
+      <span class="nav-toggle__line"></span>
+    </a>
+    <div class="nav-links" id="nav-overlay" aria-hidden="true">
+      <span class="nav-about">About</span>
+      <p class="nav-copy">
+        Sandikala Studio is an independent design and development practice creating quiet,
+        considered digital experiences for brands, cultural projects, and ambitious teams.
+      </p>
       <a class="nav-link" href="mailto:hello@sandikalastudio.com">Schedule a call</a>
     </div>
   </nav>
 </header>
+
+<script>
+  const initNavOverlay = () => {
+    const header = document.querySelector<HTMLElement>('.site-header');
+    const openToggle = document.querySelector<HTMLElement>('.nav-toggle--open');
+    const overlay = document.querySelector<HTMLElement>('#nav-overlay');
+
+    if (!header || !openToggle || !overlay) {
+      return;
+    }
+
+    if (header.dataset.navOverlayReady === 'true') {
+      return;
+    }
+
+    header.dataset.navOverlayReady = 'true';
+
+    const setOverlayOpen = (isOpen: boolean) => {
+      header.classList.toggle('is-overlay-open', isOpen);
+      document.body.classList.toggle('is-nav-open', isOpen);
+      overlay.setAttribute('aria-hidden', String(!isOpen));
+    };
+
+    const syncOverlayState = () => {
+      setOverlayOpen(window.location.hash === '#nav-overlay');
+    };
+
+    window.addEventListener('hashchange', syncOverlayState);
+    syncOverlayState();
+
+    document.querySelectorAll<HTMLAnchorElement>('.nav-toggle--close, #nav-overlay a').forEach((link) => {
+      link.addEventListener('click', () => {
+        if (link.href.startsWith('mailto:')) {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+
+        requestAnimationFrame(syncOverlayState);
+      });
+    });
+
+    overlay.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => setOverlayOpen(false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        setOverlayOpen(false);
+      }
+    });
+
+    document.addEventListener('astro:before-swap', () => setOverlayOpen(false));
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNavOverlay, { once: true });
+  } else {
+    initNavOverlay();
+  }
+</script>

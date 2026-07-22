@@ -14,14 +14,6 @@ const {
   description = 'Sandikala Studio.',
   hideFooter = false,
 } = Astro.props;
-
-const pathname = Astro.url.pathname;
-const namespace =
-  pathname === '/'
-    ? 'home'
-    : pathname.startsWith('/work/')
-      ? 'work-detail'
-      : pathname.replace(/^\/|\/$/g, '') || 'page';
 ---
 
 <!doctype html>
@@ -30,24 +22,17 @@ const namespace =
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preload" href="/fonts/ABCDiatype-Medium.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="/fonts/ABCDiatypeMono-Medium.ttf" as="font" type="font/ttf" crossorigin />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
   </head>
-  <body data-barba="wrapper">
+  <body>
     <Header />
-    <main class="page-container" data-barba="container" data-barba-namespace={namespace} tabindex="-1">
+    <main class="page-container" tabindex="-1">
       <slot />
       {!hideFooter && <Footer />}
     </main>
-    <script>
-      import '/src/scripts/page-transitions.ts';
-    </script>
   </body>
 </html>

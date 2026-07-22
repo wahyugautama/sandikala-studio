@@ -39,6 +39,7 @@
   --font-mono: 'ABC Diatype Mono', 'SFMono-Regular', Consolas, monospace;
   --font-serif: Georgia, 'Times New Roman', serif;
   --maxw: 1080px;
+  --type-h1: clamp(2.25rem, 6vw, 3rem);
 }
 
 /* ── Base elements ───────────────────────────────────────────────── */
@@ -60,34 +61,20 @@ a {
   text-decoration: none;
 }
 
+h1 {
+  font-size: var(--type-h1);
+}
+
 .page-container {
   min-height: 100svh;
 }
 
-.page-container.contact-transition,
-.page-container.contact__transition {
-  isolation: isolate;
+body.is-nav-open {
+  overflow: hidden;
 }
 
-.page-container.contact-transition::before,
-.page-container.contact__transition::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 100;
-  pointer-events: none;
-  background: var(--contact-transition-overlay, #020403);
-  clip-path: var(--contact-overlay-clip, inset(0 0 100% 0));
-  will-change: clip-path;
-}
-
-body.is-transitioning {
-  cursor: progress;
-}
-
-body.is-transitioning a,
-body.is-transitioning button {
-  pointer-events: none;
+body:has(#nav-overlay:target) {
+  overflow: hidden;
 }
 
 /* ── Header / nav ────────────────────────────────────────────────── */
@@ -96,19 +83,23 @@ body.is-transitioning button {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 10;
+  z-index: 1000;
   pointer-events: none;
 }
 
 .site-nav {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 32px;
+  padding: 28px 1.5rem;
   pointer-events: auto;
 }
 
 .nav-logo {
+  position: relative;
+  z-index: 2;
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
@@ -116,16 +107,116 @@ body.is-transitioning button {
   pointer-events: auto;
 }
 
+.nav-toggle {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.nav-toggle--close {
+  display: none;
+}
+
+.nav-toggle__line {
+  position: absolute;
+  width: 19px;
+  height: 2px;
+  background: currentColor;
+  transform-origin: center;
+  transition: transform 0.22s ease;
+}
+
+.nav-toggle__line:first-child {
+  transform: rotate(0deg);
+}
+
+.nav-toggle__line:last-child {
+  transform: rotate(90deg);
+}
+
+.site-header.is-overlay-open .nav-toggle--close .nav-toggle__line:first-child {
+  transform: rotate(45deg);
+}
+
+.site-nav:has(#nav-overlay:target) .nav-toggle--close .nav-toggle__line:first-child {
+  transform: rotate(45deg);
+}
+
+.site-header.is-overlay-open .nav-toggle--close .nav-toggle__line:last-child {
+  transform: rotate(135deg);
+}
+
+.site-nav:has(#nav-overlay:target) .nav-toggle--close .nav-toggle__line:last-child {
+  transform: rotate(135deg);
+}
+
+.site-header.is-overlay-open .nav-toggle--open {
+  display: none;
+}
+
+.site-nav:has(#nav-overlay:target) .nav-toggle--open {
+  display: none;
+}
+
+.site-header.is-overlay-open .nav-toggle--close {
+  display: grid;
+}
+
+.site-nav:has(#nav-overlay:target) .nav-toggle--close {
+  display: grid;
+}
+
 .nav-links {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: clamp(18px, 2.2vw, 34px);
+  justify-content: center;
+  gap: clamp(20px, 4vw, 42px);
+  width: auto;
+  height: auto;
+  min-height: 100svh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 96px 1.5rem;
+  background: var(--background);
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-12px);
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.site-header.is-overlay-open .nav-links {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.site-nav:has(#nav-overlay:target) .nav-links {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
-  font-size: 14px;
+  font-size: clamp(18px, 2vw, 24px);
   line-height: 1;
   letter-spacing: 0;
 }
@@ -140,6 +231,27 @@ body.is-transitioning button {
 
 .nav-link.is-active {
   opacity: 0.54;
+}
+
+.nav-about {
+  display: block;
+  font-size: var(--type-h1);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.nav-copy {
+  max-width: 42rem;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  line-height: 1.35;
+}
+
+.nav-links .nav-link {
+  margin-top: 8px;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
@@ -178,7 +290,7 @@ body.is-transitioning button {
 .hero {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 96px 24px 72px;
+  padding: 96px 1.5rem 72px;
   text-align: center;
 }
 
@@ -194,7 +306,7 @@ body.is-transitioning button {
 
 .hero-title {
   font-family: var(--font-display);
-  font-size: 60px;
+  font-size: var(--type-h1);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.03em;
@@ -219,7 +331,7 @@ body.is-transitioning button {
 .features {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 40px 24px 88px;
+  padding: 40px 1.5rem 88px;
 }
 
 .section-title {
@@ -241,7 +353,7 @@ body.is-transitioning button {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 32px 28px;
+  padding: 32px 1.5rem;
 }
 
 .feature-icon {
@@ -279,7 +391,7 @@ body.is-transitioning button {
 .cta-inner {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 72px 24px;
+  padding: 72px 1.5rem;
   text-align: center;
 }
 
@@ -312,7 +424,7 @@ body.is-transitioning button {
 .icons-page {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 128px 24px 96px;
+  padding: 128px 1.5rem 96px;
 }
 
 .icons-header {
@@ -349,7 +461,7 @@ body.is-transitioning button {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  padding: 30px 24px 24px;
+  padding: 30px 1.5rem 24px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -398,7 +510,7 @@ body.is-transitioning button {
   justify-content: flex-end;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 32px 1.5rem;
 }
 
 .footer-text {
@@ -424,21 +536,20 @@ body.is-transitioning button {
 /* ── Responsive (one breakpoint set; mirror rules above) ─────────── */
 @media (max-width: 768px) {
   .site-nav {
-    padding: 22px 20px;
+    padding: 22px 1.5rem;
   }
 
   .nav-logo {
     font-size: 13px;
   }
 
-  .nav-links {
-    gap: 14px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+  .nav-toggle {
+    width: 34px;
+    height: 34px;
   }
 
   .nav-link {
-    font-size: 13px;
+    font-size: clamp(18px, 5vw, 24px);
   }
 
   .site-nav {
@@ -446,11 +557,11 @@ body.is-transitioning button {
   }
 
   .hero {
-    padding: 64px 20px 48px;
+    padding: 64px 1.5rem 48px;
   }
 
   .hero-title {
-    font-size: 40px;
+    font-size: var(--type-h1);
   }
 
   .hero-subtitle {
@@ -466,7 +577,7 @@ body.is-transitioning button {
   }
 
   .icons-page {
-    padding: 96px 20px 72px;
+    padding: 96px 1.5rem 72px;
   }
 
   .icons-title {
@@ -480,7 +591,7 @@ body.is-transitioning button {
 
   .icon-card {
     min-height: 178px;
-    padding: 26px 18px 22px;
+    padding: 26px 1.5rem 22px;
   }
 
   .footer-inner {
@@ -491,13 +602,12 @@ body.is-transitioning button {
 
 @media (max-width: 480px) {
   .site-nav {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 12px;
+    align-items: center;
+    flex-direction: row;
+    gap: 16px;
   }
 
   .nav-links {
-    gap: 16px;
-    justify-content: flex-start;
+    gap: 28px;
   }
 }

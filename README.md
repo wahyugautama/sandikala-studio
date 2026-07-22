@@ -19,7 +19,7 @@ straight into the stylesheet.
 src/
   layouts/Layout.astro      Shared <html> shell (fonts, header, footer)
   components/               Header, Footer — reusable markup
-  pages/                    index.astro, about.astro (one file per route)
+  pages/                    index.astro, works.astro (one file per route)
   styles/main.css           The authored stylesheet — one rule per class
 public/                     Static assets (favicon)
 ```
