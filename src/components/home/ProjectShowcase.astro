@@ -1,0 +1,131 @@
+---
+import type { PortfolioProject } from '../../data/projects';
+
+interface Props {
+  projects: PortfolioProject[];
+}
+
+const { projects } = Astro.props;
+const showcaseProjects = projects.slice(0, 5).map((project) => ({
+  title: project.clientName,
+  image: project.mainImageUrl,
+  type: project.services[0] || 'Creative Direction',
+  industry: project.industry,
+  href: project.href,
+}));
+const firstProject = showcaseProjects[0];
+---
+
+<section
+  class="project-showcase"
+  id="work"
+  data-project-showcase
+  aria-label="Selected projects"
+>
+  <img class="showcase-fallback" data-showcase-fallback src={firstProject.image} alt="" loading="eager" decoding="async" crossorigin="anonymous" aria-hidden="true" />
+  <div class="showcase-webgl" data-showcase-webgl aria-hidden="true"></div>
+  <div class="showcase-shade" aria-hidden="true"></div>
+
+
+  <div class="showcase-meta showcase-meta-left" aria-live="polite">
+    <span class="showcase-meta-value" data-project-index>001.</span>
+    <span class="showcase-meta-label" data-project-type>{firstProject.type}</span>
+  </div>
+
+  <div class="showcase-selector" role="group" aria-label="Choose a project">
+    {showcaseProjects.map((project, index) => (
+      <button
+        class:list={['showcase-thumbnail', index === 0 && 'is-active']}
+        type="button"
+        data-project-button={index}
+        data-project-image={project.image}
+        aria-label={`View ${project.title}`}
+        aria-pressed={index === 0 ? 'true' : 'false'}
+        tabindex={index === 0 ? 0 : -1}
+        disabled
+      >
+        <img src={project.image} alt="" width="152" height="102" loading={index === 0 ? 'eager' : 'lazy'} decoding="async" crossorigin="anonymous" />
+      </button>
+    ))}
+    <button
+      class="showcase-autoplay"
+      type="button"
+      data-autoplay-toggle
+      aria-pressed="true"
+    >
+      Autoplay on
+    </button>
+  </div>
+
+  <div class="showcase-meta showcase-meta-right" aria-live="polite">
+    <span class="showcase-meta-value" data-project-progress>{Math.round(100 / showcaseProjects.length)}%</span>
+    <span class="showcase-meta-label" data-project-industry>{firstProject.industry}</span>
+  </div>
+
+  <a class="showcase-title" href={firstProject.href} data-project-title aria-label={`View ${firstProject.title} case study`}>
+    <span data-project-title-text>{firstProject.title}</span>
+    <small>View case study ↗</small>
+  </a>
+
+  <script type="application/json" data-showcase-projects set:html={JSON.stringify(showcaseProjects).replaceAll('<', '\\u003c')} />
+</section>
+
+<script>
+  import { destroyProjectShowcase, initProjectShowcase } from './ProjectShowcase';
+  initProjectShowcase();
+  document.addEventListener('astro:page-load', initProjectShowcase);
+  document.addEventListener('astro:before-swap', destroyProjectShowcase);
+</script>
+
+<style>
+  .project-showcase{position:relative;isolation:isolate;width:100vw;height:100vh;overflow:hidden;color:#fff;background:#272722}
+  .showcase-fallback,.showcase-webgl,.showcase-shade{position:absolute;inset:0}
+  .showcase-fallback{z-index:0;width:100vw;height:100vh;object-fit:cover;object-position:center}
+  .showcase-webgl{z-index:1;width:100vw;height:100vh;opacity:0}
+  .showcase-webgl canvas{display:block;width:100vw!important;height:100vh!important}
+  .is-webgl-ready .showcase-webgl{opacity:1}
+  .showcase-shade{z-index:2;background:rgba(11,11,10,.2);pointer-events:none}
+  .showcase-eyebrow,.showcase-edition,.showcase-meta,.showcase-selector,.showcase-title{position:absolute;z-index:3}
+  .showcase-eyebrow,.showcase-edition{top:5.45rem;margin:0;font-size:.66rem;line-height:1;text-transform:uppercase;letter-spacing:.12em}
+  .showcase-eyebrow{left:var(--pad)}
+  .showcase-edition{right:var(--pad)}
+  .showcase-meta{top:50%;display:flex;flex-direction:column;gap:.38rem;max-width:10rem;transform:translateY(-50%);font-size:.72rem;line-height:1.15;text-transform:uppercase;letter-spacing:.08em}
+  .showcase-meta-left{left:var(--pad);align-items:flex-start}
+  .showcase-meta-right{right:var(--pad);align-items:flex-end;text-align:right}
+  .showcase-meta-value{font-variant-numeric:tabular-nums;opacity:.68}
+  .showcase-meta-label{display:block;overflow:hidden;font-size:.82rem;letter-spacing:.04em}
+  .showcase-selector{top:50%;left:50%;display:flex;flex-direction:column;align-items:center;gap:0;transform:translate(-50%,-50%)}
+  .showcase-thumbnail{position:relative;width:66px;height:45px;padding:0;overflow:hidden;color:#fff;background:#111;border:1px solid rgba(255,255,255,.35);border-radius:0;cursor:pointer;opacity:.72}
+  .showcase-thumbnail::after{position:absolute;z-index:1;inset:0;content:'';background:rgba(255,255,255,.28);transform:scaleX(0);transform-origin:left center;pointer-events:none}
+  .is-autoplaying .showcase-thumbnail.is-active::after{animation:showcase-autoplay-progress 5s linear forwards}
+  .showcase-thumbnail:disabled{cursor:wait}
+  .showcase-thumbnail+.showcase-thumbnail{margin-top:-1px}
+  .showcase-thumbnail img{width:100%;height:100%;object-fit:cover;filter:brightness(.72)}
+  .showcase-thumbnail:hover,.showcase-thumbnail:focus-visible,.showcase-thumbnail.is-active{z-index:1;opacity:1;border-color:#fff;outline:1px solid #fff;outline-offset:-1px}
+  .showcase-thumbnail:focus-visible{outline-offset:-1px}
+  .showcase-autoplay{margin-top:.65rem;padding:.2rem;color:inherit;background:none;border:0;font:inherit;font-size:.55rem;line-height:1;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;opacity:.62;transition:opacity .2s}
+  .showcase-autoplay:hover,.showcase-autoplay:focus-visible{opacity:1}
+  .showcase-autoplay:focus-visible{outline:1px solid currentColor;outline-offset:2px}
+  @keyframes showcase-autoplay-progress{to{transform:scaleX(1)}}
+  .showcase-title{right:var(--pad);bottom:1.1rem;left:var(--pad);display:flex;align-items:flex-end;justify-content:center;min-height:clamp(5rem,10vw,9rem);overflow:hidden;text-align:center;text-transform:uppercase}
+  .showcase-title>span{display:block;max-width:15ch;font-size:clamp(3.5rem,8vw,8.25rem);font-weight:400;line-height:.78;letter-spacing:-.065em;transform:translateY(0)}
+  :global(.split-word){display:inline-block;white-space:nowrap}
+  :global(.split-char){display:inline-block;will-change:transform,opacity}
+  .showcase-title small{position:absolute;right:0;bottom:.2rem;font-size:.58rem;font-weight:400;letter-spacing:.1em;opacity:0;transition:opacity .25s}
+  .showcase-title:hover small,.showcase-title:focus-visible small{opacity:.8}
+  @media(max-width:700px){
+    .project-showcase{width:100vw;height:100svh}
+    .showcase-fallback,.showcase-webgl,.showcase-webgl canvas{height:100svh!important}
+    .showcase-eyebrow,.showcase-edition{top:4.55rem;font-size:.55rem}
+    .showcase-meta{top:auto;bottom:8.5rem;max-width:7.2rem;font-size:.6rem}
+    .showcase-meta-label{font-size:.66rem}
+    .showcase-thumbnail{width:58px;height:39px}
+    .showcase-title{bottom:1.25rem;min-height:5.7rem}
+    .showcase-title>span{font-size:clamp(2.8rem,15vw,5.3rem);line-height:.8}
+    .showcase-title small{display:none}
+  }
+  @media(max-height:650px){
+    .showcase-thumbnail{width:56px;height:35px}
+    .showcase-title>span{font-size:clamp(2.8rem,7.2vw,6rem)}
+  }
+</style>

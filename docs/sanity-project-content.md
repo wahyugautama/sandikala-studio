@@ -11,6 +11,10 @@ This Astro project does not include a Sanity Studio configuration or schema file
 7. `projectOverview`
 8. `imageGallery`
 
+The case-study template also supports optional `context`, `approach`, `outcome`,
+`testimonial`, and `testimonialAuthor` fields. When they are absent, the page stays
+concise and does not invent outcomes or client quotes.
+
 Use this field order in the Studio project document schema:
 
 ```ts

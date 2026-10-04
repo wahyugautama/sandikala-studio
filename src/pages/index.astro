@@ -1,8 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import InfiniteProjectList from '../components/InfiniteProjectList.astro';
+import ProjectShowcase from '../components/home/ProjectShowcase.astro';
+import { projects } from '../data/projects';
 ---
 
-<Layout title="Home" hideFooter>
-  <InfiniteProjectList />
+<Layout
+  title="Sandikala — Independent Brand & Web Studio"
+  description="Sandikala helps established businesses bring their brand and website in line with where they are going."
+  hideFooter
+>
+  <ProjectShowcase projects={projects} />
 </Layout>

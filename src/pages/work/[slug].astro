@@ -1,259 +1,241 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { projects, type Project } from '../../data/projects';
-import { urlFor } from '../../lib/sanity';
 
-interface Props {
-  project: Project;
-}
+interface Props { project: Project; }
 
 export function getStaticPaths() {
   return projects.map((project) => ({
-    params: {
-      slug: project.slug,
-    },
-    props: {
-      project,
-    },
+    params: { slug: project.slug },
+    props: { project },
   }));
 }
 
 const { project } = Astro.props;
-const projectIndex = projects.findIndex((item) => item.slug === project.slug);
-const nextProject = projects[(projectIndex + 1) % projects.length];
-const galleryImages = project.imageGallery ?? [];
-
-function getGalleryImageUrl(image: NonNullable<Project['imageGallery']>[number]) {
-  if (image.url) {
-    return image.url;
-  }
-
-  if (!image.asset?._ref) {
-    return '';
-  }
-
-  return urlFor(image).width(1800).quality(85).auto('format').url();
-}
-
-const gallery = galleryImages
-  .map((image) => ({
-    src: getGalleryImageUrl(image),
-    alt: image.alt || '',
-  }))
-  .filter((image) => image.src);
+const gallery = [
+  { src: project.mainImageUrl, alt: project.mainImage.alt || `${project.clientName} project` },
+  ...(project.imageGallery ?? [])
+    .map((image) => ({ src: image.url, alt: image.alt || '' }))
+    .filter(({ src }) => src && src !== project.mainImageUrl),
+];
+const galleryCopies = 3;
 ---
 
-<Layout title={`${project.clientName} — Sandikala Studio`} description={project.projectOverview}>
-  <article class="project-page">
-    <header class="project-hero">
-      <h1 class="project-hero__title">{project.clientName}</h1>
-    </header>
+<Layout
+  title={`${project.clientName} — Sandikala Studio`}
+  description={project.projectOverview}
+  hideFooter
+  pageType="work"
+>
+  <article class="work-detail">
+    <div class="work-close-column">
+      <a class="work-close" href="/" aria-label="Close project and return home" data-work-close>
+        <span></span><span></span>
+      </a>
+    </div>
 
-    <figure class="project-main-image">
-      <img
-        class="project-hero__image"
-        src={project.mainImageUrl}
-        alt={project.mainImage.alt || ''}
-        loading="eager"
-        decoding="async"
-      />
-    </figure>
+    <aside class="work-information" aria-label="Project information">
+      <dl class="work-metadata">
+        <div><dt>Client</dt><dd>{project.clientName}</dd></div>
+        <div><dt>Year</dt><dd>{project.year}</dd></div>
+        <div><dt>Industry</dt><dd>{project.industry}</dd></div>
+        <div><dt>Scope</dt><dd>{project.services.join(', ')}</dd></div>
+      </dl>
+    </aside>
 
-    <dl class="project-meta">
-      <div>
-        <dt>Year</dt>
-        <dd>{project.year}</dd>
-      </div>
-      <div>
-        <dt>Industry</dt>
-        <dd>{project.industry}</dd>
-      </div>
-      <div>
-        <dt>Services</dt>
-        <dd>{project.services.join(', ')}</dd>
-      </div>
-    </dl>
-
-    <section class="project-overview" aria-label="Project overview">
-      <p>{project.projectOverview}</p>
-    </section>
-
-    {
-      gallery.length > 0 && (
-        <section class="project-gallery" aria-label={`${project.clientName} gallery`}>
-          {gallery.map((image) => (
+    <section class="work-images" aria-label={`${project.clientName} project gallery`} data-infinite-gallery>
+      {Array.from({ length: galleryCopies }, (_, copyIndex) => (
+        <div class="work-images-copy" data-gallery-copy aria-hidden={copyIndex === 1 ? undefined : 'true'}>
+          {gallery.map((image, imageIndex) => (
             <img
+              class="work-image"
               src={image.src}
-              alt={image.alt}
-              loading="lazy"
+              alt={copyIndex === 1 ? image.alt : ''}
+              loading={copyIndex === 1 && imageIndex === 0 ? 'eager' : 'lazy'}
               decoding="async"
             />
           ))}
-        </section>
-      )
-    }
-
-    {
-      nextProject && (
-        <a class="next-project" href={nextProject.href}>
-          <span class="next-project__label">Next project</span>
-          <span class="next-project__row">
-            <span class="next-project__number">{nextProject.number}</span>
-            <span class="next-project__title">{nextProject.clientName}</span>
-            <span class="next-project__arrow" aria-hidden="true">&gt;</span>
-          </span>
-        </a>
-      )
-    }
+        </div>
+      ))}
+    </section>
   </article>
 </Layout>
 
+<script>
+  const initInfiniteGallery = () => {
+    const gallery = document.querySelector<HTMLElement>('[data-infinite-gallery]');
+    if (!gallery || gallery.dataset.ready === 'true') return;
+    gallery.dataset.ready = 'true';
+
+    const copies = Array.from(gallery.querySelectorAll<HTMLElement>('[data-gallery-copy]'));
+    if (copies.length !== 3) return;
+
+    let segmentHeight = 0;
+    let isRecentering = false;
+
+    const measure = () => {
+      segmentHeight = copies[1].offsetHeight;
+      if (segmentHeight > 0 && gallery.scrollTop < segmentHeight * .5) {
+        gallery.scrollTop = segmentHeight;
+      }
+    };
+
+    const recenter = () => {
+      if (isRecentering || segmentHeight <= 0) return;
+      if (gallery.scrollTop < segmentHeight * .5) {
+        isRecentering = true;
+        gallery.scrollTop += segmentHeight;
+      } else if (gallery.scrollTop >= segmentHeight * 1.5) {
+        isRecentering = true;
+        gallery.scrollTop -= segmentHeight;
+      } else {
+        return;
+      }
+      requestAnimationFrame(() => { isRecentering = false; });
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(copies[1]);
+    gallery.addEventListener('scroll', recenter, { passive: true });
+    gallery.querySelectorAll('img').forEach((image) => image.addEventListener('load', measure));
+    measure();
+  };
+
+  initInfiniteGallery();
+  document.addEventListener('astro:page-load', initInfiniteGallery);
+</script>
+
 <style>
-  .project-page {
-    padding: 116px 1.5rem 80px;
-    background: #f5f5f2;
-  }
-
-  .project-hero {
-    max-width: 100%;
-    margin: 0 auto;
-  }
-
-  .project-hero__title {
-    margin: 0 0 42px;
-    font-size: var(--type-h1);
-    font-weight: 400;
-    line-height: 0.95;
-    letter-spacing: 0;
-  }
-
-  .project-main-image {
-    max-width: 100%;
-    margin: 0 auto;
-  }
-
-  .project-hero__image {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
-  .project-meta {
+  .work-detail {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
-    max-width: 1180px;
-    margin: clamp(52px, 8vw, 96px) auto;
+    grid-template-columns: 18.75vw 31.05vw minmax(0, 1fr);
+    min-height: 100svh;
+    background: #f7f7f7;
+    color: #747474;
   }
 
-  .project-meta div {
-    display: grid;
-    gap: 8px;
-  }
-
-  .project-meta dt {
-    margin: 0;
-    font-size: 14px;
-    color: var(--muted);
-  }
-
-  .project-meta dd {
-    margin: 0;
-    font-size: 17px;
-    line-height: 1.35;
-  }
-
-  .project-overview {
-    max-width: 1180px;
-    margin: 0 auto clamp(70px, 10vw, 140px);
-  }
-
-  .project-overview p {
-    margin: 0;
-    max-width: 58ch;
-    font-size: 17px;
-    line-height: 1.45;
-    white-space: pre-line;
-  }
-
-  .project-gallery {
-    display: grid;
-    gap: clamp(48px, 8vw, 112px);
-    max-width: 1180px;
-    margin: 0 auto;
-  }
-
-  .project-gallery img {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
-  .next-project {
-    display: block;
-    max-width: 1180px;
-    margin: clamp(78px, 12vw, 150px) auto 0;
-    padding: 28px 0 0;
-    border-top: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
-  }
-
-  .next-project__label {
-    display: block;
-    margin-bottom: 18px;
-    font-size: 14px;
-  }
-
-  .next-project__row {
-    display: grid;
-    grid-template-columns: 68px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .next-project__number,
-  .next-project__arrow {
-    font-family: var(--font-mono);
-    font-weight: 650;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .next-project__title {
+  .work-close-column {
+    position: relative;
     min-width: 0;
-    overflow: hidden;
-    font-size: clamp(38px, 5vw, 72px);
-    font-weight: 400;
-    line-height: 0.84;
-    letter-spacing: -0.065em;
-    white-space: nowrap;
-    text-overflow: clip;
   }
 
-  .next-project__arrow {
-    font-size: clamp(28px, 3.5vw, 48px);
-    line-height: 1;
+  .work-close {
+    position: fixed;
+    top: 78px;
+    left: 10px;
+    z-index: 10;
+    display: block;
+    width: 20px;
+    height: 20px;
+    color: #aaa;
+  }
+
+  .work-close span {
+    position: absolute;
+    top: 9.5px;
+    left: -2px;
+    width: 24px;
+    height: 1px;
+    background: currentColor;
+    transition: color 180ms ease, transform 250ms ease;
+  }
+
+  .work-close span:first-child { transform: rotate(45deg); }
+  .work-close span:last-child { transform: rotate(-45deg); }
+  .work-close:hover { color: #34352d; }
+  .work-close:hover span:first-child { transform: rotate(135deg); }
+  .work-close:hover span:last-child { transform: rotate(45deg); }
+
+  .work-information {
+    position: relative;
+    min-width: 0;
+  }
+
+  .work-metadata {
+    position: sticky;
+    top: 79px;
+    display: grid;
+    gap: 9px;
+    width: min(19rem, calc(100% - 2rem));
+    padding-left: 11px;
+  }
+
+  .work-metadata div { display: grid; gap: 0; }
+  .work-metadata dt,
+  .work-metadata dd {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.12;
+    font-weight: 400;
+  }
+  .work-metadata dt { color: #b3b3b3; }
+  .work-metadata dd { color: #707070; }
+
+  .work-images {
+    position: sticky;
+    top: 0;
+    min-width: 0;
+    height: 100svh;
+    overflow-y: auto;
+    background: #e8e8e8;
+    scrollbar-width: none;
+  }
+
+  .work-images::-webkit-scrollbar { display: none; }
+
+  .work-images-copy { display: block; }
+
+  .work-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
   }
 
   @media (max-width: 700px) {
-    .project-page {
-      padding: 94px 1.5rem 56px;
+    .work-detail {
+      display: block;
+      padding-top: 0;
     }
 
-    .project-hero__title {
-      margin-bottom: 30px;
+    .work-close-column {
+      position: absolute;
+      inset: 0 auto auto 0;
     }
 
-    .project-meta {
-      grid-template-columns: 1fr;
-      margin: 42px auto 56px;
+    .work-close {
+      position: fixed;
+      top: 76px;
+      left: 14px;
+      width: 22px;
+      height: 22px;
+      padding: 4px;
+      background: rgba(247, 247, 247, .9);
+      border-radius: 50%;
     }
 
-    .next-project__row {
-      grid-template-columns: 50px minmax(0, 1fr) auto;
-      gap: 8px;
+    .work-close span {
+      top: 10.5px;
+      left: 2px;
+      width: 18px;
     }
 
-    .next-project__title {
-      font-size: clamp(32px, 10vw, 56px);
+    .work-information {
+      min-height: 15rem;
+      padding: 6.5rem 1rem 2rem 4rem;
+    }
+
+    .work-metadata {
+      position: static;
+      width: 100%;
+      padding: 0;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .work-images {
+      position: relative;
+      height: 100svh;
     }
   }
 </style>
