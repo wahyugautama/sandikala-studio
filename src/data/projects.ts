@@ -1,3 +1,5 @@
+import { isSanityConfigured, sanityClient } from '../lib/sanity';
+
 export interface ProjectImage { url: string; alt: string }
 
 export interface PortfolioProject {
@@ -92,7 +94,7 @@ const staticProjects: StaticProject[] = [
   },
 ];
 
-export const projects: PortfolioProject[] = staticProjects.map((project, index) => ({
+const fallbackProjects: PortfolioProject[] = staticProjects.map((project, index) => ({
   ...project,
   _id: `static-${project.slug}`,
   number: String(index + 1).padStart(2, '0'),
@@ -100,3 +102,105 @@ export const projects: PortfolioProject[] = staticProjects.map((project, index) 
   mainImage: { url: project.mainImageUrl, alt: `${project.clientName} project image` },
   imageGalleryUrls: project.imageGallery.map((image) => image.url),
 }));
+
+type SanityProject = {
+  _id?: string;
+  clientName?: string;
+  slug?: string;
+  mainImage?: ProjectImage;
+  year?: number;
+  industry?: string;
+  services?: string[];
+  projectOverview?: string;
+  context?: string;
+  approach?: string;
+  outcome?: string;
+  testimonial?: string;
+  testimonialAuthor?: string;
+  imageGallery?: ProjectImage[];
+};
+
+const projectsQuery = `
+  *[_type == "project" && defined(slug.current) && !(_id in path("drafts.**"))]
+  | order(year desc, _createdAt desc) {
+    _id,
+    "clientName": coalesce(clientName, client, title),
+    "slug": slug.current,
+    "mainImage": {
+      "url": coalesce(mainImage.asset->url, coverImage.asset->url),
+      "alt": coalesce(mainImage.alt, coverImage.alt, clientName, client, title)
+    },
+    year,
+    industry,
+    services,
+    "projectOverview": coalesce(projectOverview, summary),
+    context,
+    approach,
+    outcome,
+    testimonial,
+    testimonialAuthor,
+    "imageGallery": coalesce(imageGallery, [])[] {
+      "url": asset->url,
+      "alt": coalesce(alt, "")
+    }
+  }
+`;
+
+const isString = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
+
+const toPortfolioProject = (project: SanityProject, index: number): PortfolioProject | null => {
+  const services = project.services?.filter(isString) ?? [];
+  const imageUrl = project.mainImage?.url;
+
+  if (!isString(project._id) || !isString(project.clientName) || !isString(project.slug) || !isString(imageUrl)
+    || !Number.isInteger(project.year) || !isString(project.industry) || !services.length || !isString(project.projectOverview)) {
+    return null;
+  }
+
+  const imageGallery = (project.imageGallery ?? []).filter((image): image is ProjectImage => isString(image?.url));
+
+  return {
+    _id: project._id,
+    number: String(index + 1).padStart(2, '0'),
+    clientName: project.clientName,
+    slug: project.slug,
+    href: `/work/${project.slug}`,
+    mainImage: { url: imageUrl, alt: project.mainImage?.alt || `${project.clientName} project image` },
+    mainImageUrl: imageUrl,
+    year: project.year,
+    industry: project.industry,
+    services,
+    projectOverview: project.projectOverview,
+    context: project.context,
+    approach: project.approach,
+    outcome: project.outcome,
+    testimonial: project.testimonial,
+    testimonialAuthor: project.testimonialAuthor,
+    imageGallery,
+    imageGalleryUrls: imageGallery.map((image) => image.url),
+  };
+};
+
+let projectsPromise: Promise<PortfolioProject[]> | undefined;
+
+export const getProjects = (): Promise<PortfolioProject[]> => {
+  if (projectsPromise) return projectsPromise;
+
+  projectsPromise = (async () => {
+    if (!isSanityConfigured || !sanityClient) return fallbackProjects;
+
+    try {
+      const sourceProjects = await sanityClient.fetch<SanityProject[]>(projectsQuery);
+      const projects = sourceProjects
+        .map(toPortfolioProject)
+        .filter((project): project is PortfolioProject => project !== null);
+
+      return projects.length ? projects : fallbackProjects;
+    } catch (error) {
+      console.warn('Unable to load published projects from Sanity. Rendering local fallback projects instead.', error);
+      return fallbackProjects;
+    }
+  })();
+
+  return projectsPromise;
+};

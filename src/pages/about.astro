@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About — Sandikala Studio" description="Sandikala is an independent brand and web studio based in Bali, Indonesia.">
+  <section class="about-intro" aria-labelledby="about-title">
+    <p class="about-label">About</p>
+    <div>
+      <h1 id="about-title">A small studio for brands with somewhere to go.</h1>
+      <p>Sandikala partners with thoughtful people and businesses to make their next chapter clear, distinct, and useful.</p>
+    </div>
+  </section>
+
+  <section class="about-details" aria-label="Studio details">
+    <div>
+      <p class="about-label">Approach</p>
+      <p>We work closely, ask useful questions, and make decisions with care. The result is an identity and digital presence that feels like it could only belong to you.</p>
+    </div>
+    <div>
+      <p class="about-label">Based in</p>
+      <p>Bali, Indonesia<br />Working worldwide</p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .about-intro,.about-details{width:min(100%,var(--max));margin:auto;padding-right:var(--pad);padding-left:var(--pad)}
+  .about-intro{display:grid;grid-template-columns:minmax(8rem,1fr) 3fr;gap:var(--space-4);min-height:78svh;padding-top:calc(var(--space-8) + var(--space-5));padding-bottom:var(--space-7)}
+  .about-label{margin:0;font-size:var(--text-xs);line-height:var(--leading-label);letter-spacing:var(--tracking-label);text-transform:uppercase}
+  .about-intro h1{max-width:11ch;margin:0;font-size:var(--text-display);font-weight:400;line-height:var(--leading-tight);letter-spacing:var(--tracking-tight)}.about-intro div{display:flex;flex-direction:column;justify-content:space-between;gap:var(--space-6)}.about-intro div>p{max-width:34ch;margin:0;font-size:var(--text-lg);line-height:var(--leading-body);color:var(--muted)}
+  .about-details{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);padding-top:var(--space-5);padding-bottom:var(--section)}.about-details>div{display:grid;grid-template-columns:minmax(8rem,1fr) 2fr;gap:var(--space-3)}.about-details>div>p:last-child{max-width:30ch;margin:0;font-size:var(--text-lg);line-height:var(--leading-body)}
+  @media(max-width:700px){.about-intro,.about-details,.about-details>div{grid-template-columns:1fr}.about-intro{min-height:70svh;padding-top:calc(var(--space-8) + var(--space-3))}.about-intro div{gap:var(--space-5)}.about-details{gap:var(--space-5)}.about-details>div{gap:var(--space-2)}}
+</style>

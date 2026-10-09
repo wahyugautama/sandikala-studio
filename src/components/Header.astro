@@ -1,26 +1,92 @@
 ---
-import Logo from './Logo.astro';
+const path = Astro.url.pathname;
 ---
 
-<header class="site-header reference-header" data-site-header>
-  <nav class="reference-nav" aria-label="Primary navigation">
-    <a class="reference-logo" href="/" aria-label="Sandikala Studio — home"><Logo /></a>
-    <a class="reference-info" href="/#info">Info+</a>
+<header>
+  <nav aria-label="Main navigation">
+    <a href="/" class="brand">Sandikala</a>
+
+    <div class="links">
+      <a href="/" aria-current={path === '/' ? 'page' : undefined}>Index</a>
+      <span aria-hidden="true">/</span>
+      <a href="/about" aria-current={path === '/about' ? 'page' : undefined}>About</a>
+    </div>
+
+    <time id="clock" aria-label="Current time in Bali">--:--</time>
   </nav>
 </header>
 
+<script>
+  const clock = document.querySelector<HTMLTimeElement>('#clock');
+
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Makassar',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  const updateClock = () => {
+    if (clock) clock.textContent = formatter.format(new Date());
+  };
+
+  const scheduleClockUpdate = () => {
+    updateClock();
+    window.setTimeout(scheduleClockUpdate, 60_000 - (Date.now() % 60_000) + 50);
+  };
+
+  scheduleClockUpdate();
+</script>
+
 <style>
-  .reference-header{position:fixed;inset:0 0 auto;z-index:1000;height:64px;color:#fff;background:transparent}
-  .reference-header:before{display:none}
-  .reference-nav{display:flex;align-items:center;justify-content:space-between;width:100%;height:100%;padding:0 var(--pad);font-size:13px;line-height:1;letter-spacing:-.015em}
-  .reference-logo{display:flex;width:89px;height:25px}
-  .reference-logo :global(svg){width:100%;height:100%}
-  .reference-logo,.reference-info{transition:opacity .2s ease}
-  .reference-logo:hover,.reference-info:hover{opacity:.58}
-  .reference-info{white-space:nowrap}
-  @media(max-width:700px){
-    .reference-header{height:54px}
-    .reference-nav{font-size:12px}
-    .reference-logo{width:76px;height:auto}
+  header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 100;
+    height: 3rem;
+    background: var(--paper);
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    height: 100%;
+    padding: 0 var(--pad);
+    font-size: var(--text-sm);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .brand,
+  .links a,
+  .links span {
+    color: var(--muted);
+  }
+
+  .links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .links a[aria-current="page"],
+  .links a:hover {
+    color: var(--ink);
+  }
+
+  time {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 700px) {
+    nav {
+      gap: var(--space-3);
+      font-size: var(--text-xs);
+    }
   }
 </style>

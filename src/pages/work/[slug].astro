@@ -1,10 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { projects, type Project } from '../../data/projects';
+import { getProjects, type Project } from '../../data/projects';
 
 interface Props { project: Project; }
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const projects = await getProjects();
   return projects.map((project) => ({
     params: { slug: project.slug },
     props: { project },
@@ -25,11 +26,10 @@ const galleryCopies = 3;
   title={`${project.clientName} — Sandikala Studio`}
   description={project.projectOverview}
   hideFooter
-  pageType="work"
 >
   <article class="work-detail">
     <div class="work-close-column">
-      <a class="work-close" href="/" aria-label="Close project and return home" data-work-close>
+      <a class="work-close" href="/" aria-label="Close project and return home">
         <span></span><span></span>
       </a>
     </div>
@@ -64,8 +64,7 @@ const galleryCopies = 3;
 <script>
   const initInfiniteGallery = () => {
     const gallery = document.querySelector<HTMLElement>('[data-infinite-gallery]');
-    if (!gallery || gallery.dataset.ready === 'true') return;
-    gallery.dataset.ready = 'true';
+    if (!gallery) return;
 
     const copies = Array.from(gallery.querySelectorAll<HTMLElement>('[data-gallery-copy]'));
     if (copies.length !== 3) return;
@@ -102,7 +101,6 @@ const galleryCopies = 3;
   };
 
   initInfiniteGallery();
-  document.addEventListener('astro:page-load', initInfiniteGallery);
 </script>
 
 <style>
@@ -110,8 +108,8 @@ const galleryCopies = 3;
     display: grid;
     grid-template-columns: 18.75vw 31.05vw minmax(0, 1fr);
     min-height: 100svh;
-    background: #f7f7f7;
-    color: #747474;
+    background: var(--paper);
+    color: var(--muted);
   }
 
   .work-close-column {
@@ -121,13 +119,13 @@ const galleryCopies = 3;
 
   .work-close {
     position: fixed;
-    top: 78px;
-    left: 10px;
+    top: calc(var(--space-6) + var(--space-2));
+    left: var(--space-2);
     z-index: 10;
     display: block;
     width: 20px;
     height: 20px;
-    color: #aaa;
+    color: var(--muted);
   }
 
   .work-close span {
@@ -137,12 +135,12 @@ const galleryCopies = 3;
     width: 24px;
     height: 1px;
     background: currentColor;
-    transition: color 180ms ease, transform 250ms ease;
+    transition: color var(--duration-fast) ease, transform var(--duration-fast) ease;
   }
 
   .work-close span:first-child { transform: rotate(45deg); }
   .work-close span:last-child { transform: rotate(-45deg); }
-  .work-close:hover { color: #34352d; }
+  .work-close:hover { color: var(--ink); }
   .work-close:hover span:first-child { transform: rotate(135deg); }
   .work-close:hover span:last-child { transform: rotate(45deg); }
 
@@ -153,23 +151,23 @@ const galleryCopies = 3;
 
   .work-metadata {
     position: sticky;
-    top: 79px;
+    top: calc(var(--space-6) + var(--space-2));
     display: grid;
-    gap: 9px;
+    gap: var(--space-1);
     width: min(19rem, calc(100% - 2rem));
-    padding-left: 11px;
+    padding-left: var(--space-2);
   }
 
   .work-metadata div { display: grid; gap: 0; }
   .work-metadata dt,
   .work-metadata dd {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.12;
+    font-size: var(--text-sm);
+    line-height: var(--leading-label);
     font-weight: 400;
   }
-  .work-metadata dt { color: #b3b3b3; }
-  .work-metadata dd { color: #707070; }
+  .work-metadata dt { color: var(--muted); opacity: .65; }
+  .work-metadata dd { color: var(--muted); }
 
   .work-images {
     position: sticky;
@@ -177,7 +175,7 @@ const galleryCopies = 3;
     min-width: 0;
     height: 100svh;
     overflow-y: auto;
-    background: #e8e8e8;
+    background: var(--paper);
     scrollbar-width: none;
   }
 
@@ -205,13 +203,11 @@ const galleryCopies = 3;
 
     .work-close {
       position: fixed;
-      top: 76px;
-      left: 14px;
+      top: calc(var(--space-6) + var(--space-2));
+      left: var(--space-2);
       width: 22px;
       height: 22px;
-      padding: 4px;
-      background: rgba(247, 247, 247, .9);
-      border-radius: 50%;
+      padding: var(--space-1);
     }
 
     .work-close span {
@@ -222,7 +218,7 @@ const galleryCopies = 3;
 
     .work-information {
       min-height: 15rem;
-      padding: 6.5rem 1rem 2rem 4rem;
+      padding: calc(var(--space-6) + var(--space-3)) var(--pad) var(--space-4) var(--space-6);
     }
 
     .work-metadata {
@@ -230,7 +226,7 @@ const galleryCopies = 3;
       width: 100%;
       padding: 0;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1rem;
+      gap: var(--space-2);
     }
 
     .work-images {

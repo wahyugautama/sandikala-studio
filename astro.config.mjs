@@ -7,7 +7,6 @@ export default defineConfig({
   redirects: {
     '/works': '/#work',
     '/work': '/#work',
-    '/about': '/#studio',
     '/studio': '/#studio',
     '/services': '/#capabilities',
     '/process': '/#process',

@@ -1,7 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ProjectShowcase from '../components/home/ProjectShowcase.astro';
-import { projects } from '../data/projects';
+import { getProjects } from '../data/projects';
+
+const projects = await getProjects();
 ---
 
 <Layout
@@ -9,5 +10,46 @@ import { projects } from '../data/projects';
   description="Sandikala helps established businesses bring their brand and website in line with where they are going."
   hideFooter
 >
-  <ProjectShowcase projects={projects} />
+  <section class="home-hero" aria-labelledby="home-title">
+    <h1 id="home-title">Independent<br />brand &amp; web studio.</h1>
+  </section>
+
+  <section class="selected-work" id="info" aria-labelledby="work-title">
+    <div class="work-heading">
+      <p>Selected work</p>
+      <h2 id="work-title">Projects shaped<br />with intention.</h2>
+    </div>
+
+    <div class="work-table" aria-label="Selected projects">
+      <div class="work-columns" aria-hidden="true">
+        <span>Client</span>
+        <span>Service</span>
+        <span>Industry</span>
+      </div>
+      {projects.map((project) => (
+        <a class="work-row" href={project.href} aria-label={`View ${project.clientName} case study`}>
+          <span class="work-client">{project.clientName}</span>
+          <span class="work-service"><span class="work-mobile-label">Service</span>{project.services[0]}</span>
+          <span class="work-industry"><span class="work-mobile-label">Industry</span>{project.industry}</span>
+        </a>
+      ))}
+    </div>
+  </section>
 </Layout>
+
+<style>
+  .home-hero{display:flex;align-items:flex-end;min-height:100svh;padding:calc(var(--space-8) + var(--space-3)) var(--pad) var(--space-7)}
+  .home-hero h1{max-width:10ch;margin:0;font-size:var(--text-display);font-weight:400;line-height:var(--leading-tight);letter-spacing:var(--tracking-tight)}
+  .selected-work{width:min(100%,var(--max));margin:auto;padding:var(--section) var(--pad)}
+  .work-heading{display:grid;grid-template-columns:minmax(8rem,1fr) 3fr;gap:var(--space-4);margin-bottom:clamp(3rem,7vw,7rem)}
+  .work-heading p,.work-columns,.work-mobile-label{font-size:var(--text-xs);line-height:var(--leading-label);letter-spacing:var(--tracking-label);text-transform:uppercase}
+  .work-heading p{margin:0}.work-heading h2{max-width:12ch;margin:0;font-size:var(--text-xl);font-weight:400;line-height:var(--leading-tight);letter-spacing:var(--tracking-tight)}
+  .work-table{border-top:1px solid var(--line)}
+  .work-columns,.work-row{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(9rem,.8fr) minmax(8rem,.65fr);gap:var(--space-4);align-items:baseline}
+  .work-columns{padding:var(--space-2) 0;color:var(--muted);border-bottom:1px solid var(--line)}
+  .work-row{position:relative;isolation:isolate;padding:var(--space-3) 0;color:var(--ink);border-bottom:1px solid var(--line);transition:padding var(--duration-fast) ease,background-color var(--duration-fast) ease}
+  .work-row::after{position:absolute;inset:0;z-index:-1;background:var(--lime);content:'';opacity:0;transition:opacity var(--duration-fast) ease}
+  .work-row:hover,.work-row:focus-visible{padding-right:var(--space-2);padding-left:var(--space-2);outline:0}.work-row:hover::after,.work-row:focus-visible::after{opacity:1}
+  .work-client{font-size:var(--text-xl);line-height:var(--leading-tight);letter-spacing:var(--tracking-tight)}.work-service,.work-industry{font-size:var(--text-sm);line-height:var(--leading-body)}.work-industry{color:var(--muted)}.work-mobile-label{display:none}
+  @media(max-width:700px){.home-hero{min-height:75svh;padding-top:calc(var(--space-8) + var(--space-2));padding-bottom:var(--space-6)}.home-hero h1{font-size:clamp(3.5rem,16vw,6.25rem)}.work-heading{grid-template-columns:1fr;gap:var(--space-3)}.work-columns{display:none}.work-row{grid-template-columns:1fr 1fr;gap:var(--space-2);padding:var(--space-3) 0}.work-client{grid-column:1/-1}.work-service,.work-industry{display:grid;gap:var(--space-1);font-size:var(--text-xs)}.work-mobile-label{display:block;color:var(--muted)}.work-row:hover,.work-row:focus-visible{padding-right:var(--space-1);padding-left:var(--space-1)}}
+</style>

@@ -1,15 +1,14 @@
 ---
 import '../styles/main.css';
+import '../styles/reset.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title?: string;
   description?: string;
   hideHeader?: boolean;
   hideFooter?: boolean;
-  pageType?: 'home' | 'work';
 }
 
 const {
@@ -17,7 +16,6 @@ const {
   description = 'Sandikala Studio.',
   hideHeader = false,
   hideFooter = false,
-  pageType = 'home',
 } = Astro.props;
 ---
 
@@ -31,57 +29,13 @@ const {
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
-    <ClientRouter />
   </head>
-  <body class:list={[`page-${pageType}`]}>
-    {!hideHeader && <Header transition:persist="site-header" />}
+  <body>
+    {!hideHeader && <Header />}
     <a class="skip-link" href="#main-content">Skip to content</a>
-    <main class="page-container page-layer" id="main-content" tabindex="-1">
+    <main class="page-container" id="main-content" tabindex="-1">
       <slot />
     </main>
     {!hideFooter && <Footer />}
   </body>
 </html>
-
-<script>
-  const routeType = (url: URL) => url.pathname.startsWith('/work/') ? 'work' : 'home';
-
-  document.addEventListener('astro:after-preparation', (event) => {
-      const transition = event as CustomEvent & { from: URL; to: URL; newDocument: Document };
-      const fromType = routeType(transition.from);
-      const toType = routeType(transition.to);
-      const kind = `${fromType}-to-${toType}`;
-
-      document.documentElement.dataset.navigationKind = kind;
-      transition.newDocument.documentElement.dataset.navigationKind = kind;
-
-      if (fromType === 'home' && toType === 'work') {
-        sessionStorage.setItem('sandikala:work-from-home', 'true');
-        sessionStorage.setItem('sandikala:last-project', transition.to.pathname);
-      } else if (toType === 'home') {
-        sessionStorage.removeItem('sandikala:work-from-home');
-      }
-  });
-
-  document.addEventListener('click', (event) => {
-      const target = event.target instanceof Element ? event.target.closest('[data-work-close]') : null;
-      if (!(target instanceof HTMLAnchorElement)) return;
-
-      if (sessionStorage.getItem('sandikala:work-from-home') === 'true' && history.length > 1) {
-        event.preventDefault();
-        history.back();
-      }
-  });
-
-  document.addEventListener('astro:page-load', () => {
-      if (document.body.classList.contains('page-work')) {
-        document.querySelector<HTMLElement>('#main-content')?.focus({ preventScroll: true });
-      } else {
-        const lastProject = sessionStorage.getItem('sandikala:last-project');
-        if (lastProject) {
-          document.querySelector<HTMLElement>(`a[href="${CSS.escape(lastProject)}"]`)?.focus({ preventScroll: true });
-          sessionStorage.removeItem('sandikala:last-project');
-        }
-      }
-  });
-</script>
