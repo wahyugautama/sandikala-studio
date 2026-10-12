@@ -2,10 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 import { getProjects, type Project } from '../../data/projects';
 
-interface Props { project: Project; }
+interface Props {
+  project: Project;
+}
 
 export async function getStaticPaths() {
   const projects = await getProjects();
+
   return projects.map((project) => ({
     params: { slug: project.slug },
     props: { project },
@@ -13,225 +16,54 @@ export async function getStaticPaths() {
 }
 
 const { project } = Astro.props;
-const gallery = [
-  { src: project.mainImageUrl, alt: project.mainImage.alt || `${project.clientName} project` },
-  ...(project.imageGallery ?? [])
-    .map((image) => ({ src: image.url, alt: image.alt || '' }))
-    .filter(({ src }) => src && src !== project.mainImageUrl),
-];
-const galleryCopies = 3;
+const galleryImages = project.imageGallery.length ? project.imageGallery : project.mainImage ? [project.mainImage] : [];
+const description = project.projectOverview || `${project.title} project by Sandikala Studio.`;
 ---
 
 <Layout
-  title={`${project.clientName} — Sandikala Studio`}
-  description={project.projectOverview}
+  title={`${project.title} — Sandikala Studio`}
+  description={description}
   hideFooter
 >
-  <article class="work-detail">
-    <div class="work-close-column">
-      <a class="work-close" href="/" aria-label="Close project and return home">
-        <span></span><span></span>
-      </a>
-    </div>
+  <article class="project-detail">
+    <header class="project-information">
+      <h1>{project.title}</h1>
+      {project.year && <p class="project-year">{project.year}</p>}
+      {project.projectOverview && <p class="project-description">{project.projectOverview}</p>}
+      {project.projectUrl && (
+        <p class="project-link">
+          <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">{project.projectUrl} ↗</a>
+        </p>
+      )}
+    </header>
 
-    <aside class="work-information" aria-label="Project information">
-      <dl class="work-metadata">
-        <div><dt>Client</dt><dd>{project.clientName}</dd></div>
-        <div><dt>Year</dt><dd>{project.year}</dd></div>
-        <div><dt>Industry</dt><dd>{project.industry}</dd></div>
-        <div><dt>Scope</dt><dd>{project.services.join(', ')}</dd></div>
-      </dl>
-    </aside>
-
-    <section class="work-images" aria-label={`${project.clientName} project gallery`} data-infinite-gallery>
-      {Array.from({ length: galleryCopies }, (_, copyIndex) => (
-        <div class="work-images-copy" data-gallery-copy aria-hidden={copyIndex === 1 ? undefined : 'true'}>
-          {gallery.map((image, imageIndex) => (
+    {galleryImages.length > 0 && (
+      <section class="project-gallery" aria-label={`${project.title} image gallery`}>
+        {galleryImages.map((image, index) => (
+          <figure>
             <img
-              class="work-image"
-              src={image.src}
-              alt={copyIndex === 1 ? image.alt : ''}
-              loading={copyIndex === 1 && imageIndex === 0 ? 'eager' : 'lazy'}
+              src={image.url}
+              alt={image.alt.trim() || `${project.title} project image ${index + 1}`}
+              loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
             />
-          ))}
-        </div>
-      ))}
-    </section>
+          </figure>
+        ))}
+      </section>
+    )}
   </article>
 </Layout>
 
-<script>
-  const initInfiniteGallery = () => {
-    const gallery = document.querySelector<HTMLElement>('[data-infinite-gallery]');
-    if (!gallery) return;
-
-    const copies = Array.from(gallery.querySelectorAll<HTMLElement>('[data-gallery-copy]'));
-    if (copies.length !== 3) return;
-
-    let segmentHeight = 0;
-    let isRecentering = false;
-
-    const measure = () => {
-      segmentHeight = copies[1].offsetHeight;
-      if (segmentHeight > 0 && gallery.scrollTop < segmentHeight * .5) {
-        gallery.scrollTop = segmentHeight;
-      }
-    };
-
-    const recenter = () => {
-      if (isRecentering || segmentHeight <= 0) return;
-      if (gallery.scrollTop < segmentHeight * .5) {
-        isRecentering = true;
-        gallery.scrollTop += segmentHeight;
-      } else if (gallery.scrollTop >= segmentHeight * 1.5) {
-        isRecentering = true;
-        gallery.scrollTop -= segmentHeight;
-      } else {
-        return;
-      }
-      requestAnimationFrame(() => { isRecentering = false; });
-    };
-
-    const observer = new ResizeObserver(measure);
-    observer.observe(copies[1]);
-    gallery.addEventListener('scroll', recenter, { passive: true });
-    gallery.querySelectorAll('img').forEach((image) => image.addEventListener('load', measure));
-    measure();
-  };
-
-  initInfiniteGallery();
-</script>
-
 <style>
-  .work-detail {
-    display: grid;
-    grid-template-columns: 18.75vw 31.05vw minmax(0, 1fr);
-    min-height: 100svh;
-    background: var(--paper);
-    color: var(--muted);
-  }
-
-  .work-close-column {
-    position: relative;
-    min-width: 0;
-  }
-
-  .work-close {
-    position: fixed;
-    top: calc(var(--space-6) + var(--space-2));
-    left: var(--space-2);
-    z-index: 10;
-    display: block;
-    width: 20px;
-    height: 20px;
-    color: var(--muted);
-  }
-
-  .work-close span {
-    position: absolute;
-    top: 9.5px;
-    left: -2px;
-    width: 24px;
-    height: 1px;
-    background: currentColor;
-    transition: color var(--duration-fast) ease, transform var(--duration-fast) ease;
-  }
-
-  .work-close span:first-child { transform: rotate(45deg); }
-  .work-close span:last-child { transform: rotate(-45deg); }
-  .work-close:hover { color: var(--ink); }
-  .work-close:hover span:first-child { transform: rotate(135deg); }
-  .work-close:hover span:last-child { transform: rotate(45deg); }
-
-  .work-information {
-    position: relative;
-    min-width: 0;
-  }
-
-  .work-metadata {
-    position: sticky;
-    top: calc(var(--space-6) + var(--space-2));
-    display: grid;
-    gap: var(--space-1);
-    width: min(19rem, calc(100% - 2rem));
-    padding-left: var(--space-2);
-  }
-
-  .work-metadata div { display: grid; gap: 0; }
-  .work-metadata dt,
-  .work-metadata dd {
-    margin: 0;
-    font-size: var(--text-sm);
-    line-height: var(--leading-label);
-    font-weight: 400;
-  }
-  .work-metadata dt { color: var(--muted); opacity: .65; }
-  .work-metadata dd { color: var(--muted); }
-
-  .work-images {
-    position: sticky;
-    top: 0;
-    min-width: 0;
-    height: 100svh;
-    overflow-y: auto;
-    background: var(--paper);
-    scrollbar-width: none;
-  }
-
-  .work-images::-webkit-scrollbar { display: none; }
-
-  .work-images-copy { display: block; }
-
-  .work-image {
-    display: block;
-    width: 100%;
-    height: auto;
-    margin: 0;
-  }
-
-  @media (max-width: 700px) {
-    .work-detail {
-      display: block;
-      padding-top: 0;
-    }
-
-    .work-close-column {
-      position: absolute;
-      inset: 0 auto auto 0;
-    }
-
-    .work-close {
-      position: fixed;
-      top: calc(var(--space-6) + var(--space-2));
-      left: var(--space-2);
-      width: 22px;
-      height: 22px;
-      padding: var(--space-1);
-    }
-
-    .work-close span {
-      top: 10.5px;
-      left: 2px;
-      width: 18px;
-    }
-
-    .work-information {
-      min-height: 15rem;
-      padding: calc(var(--space-6) + var(--space-3)) var(--pad) var(--space-4) var(--space-6);
-    }
-
-    .work-metadata {
-      position: static;
-      width: 100%;
-      padding: 0;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--space-2);
-    }
-
-    .work-images {
-      position: relative;
-      height: 100svh;
-    }
-  }
+  .project-detail{width:min(100%,var(--max));margin:0 auto;padding:calc(var(--nav-height) + var(--space-6)) var(--pad) var(--space-7)}
+  .project-information{max-width:52rem;margin-bottom:var(--space-7)}
+  .project-information h1{margin:0 0 var(--space-3);font-size:clamp(2.25rem,5vw,5rem);line-height:1.05;letter-spacing:-.04em}
+  .project-year{margin:0 0 var(--space-5);color:var(--muted);font-variant-numeric:tabular-nums}
+  .project-description{max-width:65ch;margin:0}
+  .project-link{margin:var(--space-4) 0 0;overflow-wrap:anywhere}
+  .project-link a{text-decoration:underline;text-underline-offset:.15em}
+  .project-gallery figure{margin:0}
+  .project-gallery figure+figure{margin-top:var(--space-4)}
+  .project-gallery img{width:100%;height:auto}
+  @media(max-width:700px){.project-detail{padding-top:calc(var(--nav-height) + var(--space-4));padding-bottom:var(--space-6)}.project-information{margin-bottom:var(--space-5)}.project-year{margin-bottom:var(--space-4)}.project-gallery figure+figure{margin-top:var(--space-3)}}
 </style>

@@ -1,6 +1,6 @@
 ---
-import '../styles/main.css';
 import '../styles/reset.css';
+import '../styles/main.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
@@ -32,7 +32,6 @@ const {
   </head>
   <body>
     {!hideHeader && <Header />}
-    <a class="skip-link" href="#main-content">Skip to content</a>
     <main class="page-container" id="main-content" tabindex="-1">
       <slot />
     </main>

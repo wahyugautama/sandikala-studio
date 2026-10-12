@@ -4,27 +4,26 @@ export interface ProjectImage { url: string; alt: string }
 
 export interface PortfolioProject {
   _id: string;
-  number: string;
+  title: string;
   clientName: string;
   slug: string;
   href: string;
-  mainImage: ProjectImage;
-  mainImageUrl: string;
-  year: number;
+  mainImage?: ProjectImage;
+  year?: number;
+  projectUrl?: string;
   industry: string;
   services: string[];
-  projectOverview: string;
+  projectOverview?: string;
   context?: string;
   approach?: string;
   outcome?: string;
   testimonial?: string;
   testimonialAuthor?: string;
   imageGallery: ProjectImage[];
-  imageGalleryUrls: string[];
 }
 
 export type Project = PortfolioProject;
-type StaticProject = Omit<PortfolioProject, '_id' | 'number' | 'href' | 'mainImage' | 'imageGalleryUrls'>;
+type StaticProject = Omit<PortfolioProject, '_id' | 'title' | 'href' | 'mainImage'> & { mainImageUrl: string };
 
 const staticProjects: StaticProject[] = [
   {
@@ -94,21 +93,22 @@ const staticProjects: StaticProject[] = [
   },
 ];
 
-const fallbackProjects: PortfolioProject[] = staticProjects.map((project, index) => ({
+const fallbackProjects: PortfolioProject[] = staticProjects.map(({ mainImageUrl, ...project }) => ({
   ...project,
   _id: `static-${project.slug}`,
-  number: String(index + 1).padStart(2, '0'),
+  title: project.clientName,
   href: `/work/${project.slug}`,
-  mainImage: { url: project.mainImageUrl, alt: `${project.clientName} project image` },
-  imageGalleryUrls: project.imageGallery.map((image) => image.url),
+  mainImage: { url: mainImageUrl, alt: `${project.clientName} project image` },
 }));
 
 type SanityProject = {
   _id?: string;
+  title?: string;
   clientName?: string;
   slug?: string;
   mainImage?: ProjectImage;
   year?: number;
+  projectUrl?: string;
   industry?: string;
   services?: string[];
   projectOverview?: string;
@@ -124,6 +124,7 @@ const projectsQuery = `
   *[_type == "project" && defined(slug.current) && !(_id in path("drafts.**"))]
   | order(year desc, _createdAt desc) {
     _id,
+    "title": coalesce(title, clientName, client),
     "clientName": coalesce(clientName, client, title),
     "slug": slug.current,
     "mainImage": {
@@ -131,6 +132,7 @@ const projectsQuery = `
       "alt": coalesce(mainImage.alt, coverImage.alt, clientName, client, title)
     },
     year,
+    projectUrl,
     industry,
     services,
     "projectOverview": coalesce(projectOverview, summary),
@@ -148,12 +150,22 @@ const projectsQuery = `
 
 const isString = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
 
-const toPortfolioProject = (project: SanityProject, index: number): PortfolioProject | null => {
+const isHttpUrl = (value: unknown): value is string => {
+  if (!isString(value)) return false;
+
+  try {
+    return ['http:', 'https:'].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+};
+
+const toPortfolioProject = (project: SanityProject): PortfolioProject | null => {
   const services = project.services?.filter(isString) ?? [];
   const imageUrl = project.mainImage?.url;
 
-  if (!isString(project._id) || !isString(project.clientName) || !isString(project.slug) || !isString(imageUrl)
-    || !Number.isInteger(project.year) || !isString(project.industry) || !services.length || !isString(project.projectOverview)) {
+  if (!isString(project._id) || !isString(project.clientName) || !isString(project.slug)
+    || !isString(project.industry) || !services.length) {
     return null;
   }
 
@@ -161,23 +173,22 @@ const toPortfolioProject = (project: SanityProject, index: number): PortfolioPro
 
   return {
     _id: project._id,
-    number: String(index + 1).padStart(2, '0'),
+    title: isString(project.title) ? project.title : project.clientName,
     clientName: project.clientName,
     slug: project.slug,
     href: `/work/${project.slug}`,
-    mainImage: { url: imageUrl, alt: project.mainImage?.alt || `${project.clientName} project image` },
-    mainImageUrl: imageUrl,
+    mainImage: isString(imageUrl) ? { url: imageUrl, alt: project.mainImage?.alt || `${project.clientName} project image` } : undefined,
     year: project.year,
+    projectUrl: isHttpUrl(project.projectUrl) ? project.projectUrl : undefined,
     industry: project.industry,
     services,
-    projectOverview: project.projectOverview,
+    projectOverview: isString(project.projectOverview) ? project.projectOverview : undefined,
     context: project.context,
     approach: project.approach,
     outcome: project.outcome,
     testimonial: project.testimonial,
     testimonialAuthor: project.testimonialAuthor,
     imageGallery,
-    imageGalleryUrls: imageGallery.map((image) => image.url),
   };
 };
 
