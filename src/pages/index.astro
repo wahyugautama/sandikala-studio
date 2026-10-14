@@ -1,14 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getProjects } from '../data/projects';
+import { getProjectSummaries } from '../data/projects';
 
-const projects = await getProjects();
+const projects = await getProjectSummaries();
 ---
 
 <Layout
   title="Sandikala — Independent Brand & Web Studio"
   description="Sandikala helps established businesses bring their brand and website in line with where they are going."
-  hideFooter
 >
   <div class="home-page">
     <section class="home-hero" aria-labelledby="home-title">
@@ -30,8 +29,8 @@ const projects = await getProjects();
         {projects.map((project) => (
           <a class="work-row" href={project.href} aria-label={`View ${project.clientName} case study`}>
             <span class="work-client">{project.clientName}</span>
-            <span class="work-service"><span class="work-mobile-label">Service</span>{project.services[0]}</span>
-            <span class="work-industry"><span class="work-mobile-label">Industry</span>{project.industry}</span>
+            <span class="work-service"><span class="work-mobile-label">Service</span>{project.services[0] || '—'}</span>
+            <span class="work-industry"><span class="work-mobile-label">Industry</span>{project.industry || '—'}</span>
           </a>
         ))}
       </div>

@@ -1,8 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getProjects } from '../data/projects';
+import { getProjectSummaries } from '../data/projects';
 
-const projects = await getProjects();
+const projects = await getProjectSummaries();
 const services = [...new Set(projects.flatMap((project) => project.services))];
 const awards = [
   { name: 'CSSDA Special Kudos', year: '2025' },
@@ -13,7 +13,7 @@ const awards = [
 
 <Layout title="About — Sandikala Studio" description="Sandikala is an independent design and development studio based in Bali, Indonesia.">
   <section class="about-page" aria-label="About Sandikala Studio">
-    <p class="about-introduction">Sandikala is an independent design and development studio for businesses ready to make their next chapter clear, distinct, and useful.</p>
+    <h1 class="about-introduction">Sandikala is an independent design and development studio for businesses ready to make their next chapter clear, distinct, and useful.</h1>
 
     <div class="about-sections">
       <section class="about-section" aria-labelledby="services-title">
@@ -30,7 +30,7 @@ const awards = [
       </section>
     </div>
 
-    <div class="about-contact">
+    <div class="about-contact" id="contact">
       <a href="mailto:hello@sandikalastudio.com">hello@sandikalastudio.com</a>
       <a href="https://cal.com/sandikalastudio/discoverycall" target="_blank" rel="noopener noreferrer">Schedule a Call ↗</a>
       <p>Engagements start at USD 5,000.</p>

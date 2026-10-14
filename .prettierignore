@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+.shipstudio/
+.vercel/
+package-lock.json
+public/
+.env*

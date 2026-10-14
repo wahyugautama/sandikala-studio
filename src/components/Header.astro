@@ -1,90 +1,257 @@
 ---
-const path = Astro.url.pathname;
+import { getProjectSummaries } from '../data/projects';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const projects = await getProjectSummaries();
 ---
 
-<header>
-  <nav aria-label="Main navigation">
-    <a href="/" class="brand">Sandikala</a>
+<header class="site-header" data-site-header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/" class="brand" aria-label="Sandikala home">Sandikala</a>
 
-    <div class="links">
-      <a href="/" aria-current={path === '/' ? 'page' : undefined}>Index</a>
-      <span aria-hidden="true">/</span>
-      <a href="/about" aria-current={path === '/about' ? 'page' : undefined}>About</a>
-    </div>
+    <button class="work-toggle" type="button" aria-expanded="false" aria-controls="work-index-menu" data-work-toggle>
+      <span>Work Index</span>
+      <span class="work-indicator" aria-hidden="true" data-work-indicator>+</span>
+    </button>
 
-    <time id="clock" aria-label="Current time in Bali">--:--</time>
+    <a href="/about" class="info-link" aria-current={path === '/about' ? 'page' : undefined}>Info+</a>
   </nav>
+
+  <div class="work-dropdown" id="work-index-menu" data-work-dropdown hidden>
+    <nav class="work-list" aria-label="Work index">
+      {projects.map((project) => (
+        <a href={project.href} class="work-link" data-work-link>{project.title}</a>
+      ))}
+    </nav>
+  </div>
 </header>
 
 <script>
-  const clock = document.querySelector<HTMLTimeElement>('#clock');
+  import { gsap } from 'gsap';
 
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Makassar',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+  type HeaderWindow = Window & { __sandikalaHeaderCleanup?: () => void };
 
-  const updateClock = () => {
-    if (clock) clock.textContent = formatter.format(new Date());
+  const initializeHeader = () => {
+    const headerWindow = window as HeaderWindow;
+    headerWindow.__sandikalaHeaderCleanup?.();
+
+    const header = document.querySelector<HTMLElement>('[data-site-header]');
+    const toggle = header?.querySelector<HTMLButtonElement>('[data-work-toggle]');
+    const dropdown = header?.querySelector<HTMLElement>('[data-work-dropdown]');
+    const indicator = header?.querySelector<HTMLElement>('[data-work-indicator]');
+    const projectLinks = dropdown ? Array.from(dropdown.querySelectorAll<HTMLAnchorElement>('[data-work-link]')) : [];
+    if (!header || !toggle || !dropdown || !indicator) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let isOpen = false;
+    let transitionRevision = 0;
+
+    const finishClosed = (revision: number) => {
+      if (isOpen || revision !== transitionRevision) return;
+      dropdown.hidden = true;
+      gsap.set([dropdown, ...projectLinks], { clearProps: 'opacity,visibility,transform' });
+    };
+
+    const setOpen = (nextOpen: boolean, focusToggle = false) => {
+      if (nextOpen === isOpen) return;
+      isOpen = nextOpen;
+      transitionRevision += 1;
+      const revision = transitionRevision;
+      const duration = prefersReducedMotion.matches ? 0 : 0.24;
+
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      indicator.textContent = isOpen ? '−' : '+';
+      gsap.killTweensOf([dropdown, ...projectLinks]);
+
+      if (isOpen) {
+        dropdown.hidden = false;
+        gsap.fromTo(dropdown, { autoAlpha: 0, y: -6 }, {
+          autoAlpha: 1,
+          y: 0,
+          duration,
+          ease: 'power2.out',
+          overwrite: true,
+        });
+        gsap.fromTo(projectLinks, { autoAlpha: 0, y: -4 }, {
+          autoAlpha: 1,
+          y: 0,
+          duration: prefersReducedMotion.matches ? 0 : 0.2,
+          stagger: prefersReducedMotion.matches ? 0 : 0.035,
+          delay: prefersReducedMotion.matches ? 0 : 0.04,
+          ease: 'power2.out',
+          overwrite: true,
+        });
+        return;
+      }
+
+      if (focusToggle) toggle.focus();
+      gsap.to(projectLinks, {
+        autoAlpha: 0,
+        y: -2,
+        duration: prefersReducedMotion.matches ? 0 : 0.12,
+        ease: 'power1.in',
+        overwrite: true,
+      });
+      gsap.to(dropdown, {
+        autoAlpha: 0,
+        y: -6,
+        duration: prefersReducedMotion.matches ? 0 : 0.16,
+        ease: 'power1.in',
+        overwrite: true,
+        onComplete: () => finishClosed(revision),
+      });
+    };
+
+    const handleToggle = () => setOpen(!isOpen);
+    const handleOutsideClick = (event: PointerEvent) => {
+      if (isOpen && event.target instanceof Node && !header.contains(event.target)) setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isOpen && event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false, true);
+      }
+    };
+    const handleProjectClick = () => setOpen(false);
+
+    toggle.addEventListener('click', handleToggle);
+    document.addEventListener('pointerdown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    projectLinks.forEach((link) => link.addEventListener('click', handleProjectClick));
+
+    headerWindow.__sandikalaHeaderCleanup = () => {
+      transitionRevision += 1;
+      toggle.removeEventListener('click', handleToggle);
+      document.removeEventListener('pointerdown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+      projectLinks.forEach((link) => link.removeEventListener('click', handleProjectClick));
+      gsap.killTweensOf([dropdown, ...projectLinks]);
+      delete headerWindow.__sandikalaHeaderCleanup;
+    };
   };
 
-  const scheduleClockUpdate = () => {
-    updateClock();
-    window.setTimeout(scheduleClockUpdate, 60_000 - (Date.now() % 60_000) + 50);
-  };
+  const handleBeforeSwap = () => (window as HeaderWindow).__sandikalaHeaderCleanup?.();
 
-  scheduleClockUpdate();
+  document.addEventListener('astro:page-load', initializeHeader);
+  document.addEventListener('astro:before-swap', handleBeforeSwap);
+  initializeHeader();
+
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      (window as HeaderWindow).__sandikalaHeaderCleanup?.();
+      document.removeEventListener('astro:page-load', initializeHeader);
+      document.removeEventListener('astro:before-swap', handleBeforeSwap);
+    });
+  }
 </script>
 
 <style>
-  header {
+  .site-header {
     position: fixed;
     inset: 0 0 auto;
     z-index: 100;
-    height: var(--nav-height);
     background: var(--paper);
   }
 
-  nav {
-    display: flex;
+  .site-nav,
+  .work-dropdown {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    padding-inline: var(--pad);
+  }
+
+  .site-nav {
     align-items: center;
-    gap: var(--space-5);
-    height: 100%;
-    padding: 0 var(--pad);
+    height: var(--nav-height);
   }
 
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .brand,
-  .links a,
-  .links span {
+  .brand {
+    justify-self: start;
     color: var(--muted);
   }
 
-  .links {
+  .work-toggle {
     display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    grid-column: 2;
+    align-items: baseline;
+    gap: .35em;
+    justify-self: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
   }
 
-  .links a[aria-current="page"],
-  .links a:hover {
+  .work-indicator {
+    min-width: .65em;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .info-link {
+    grid-column: 3;
+    justify-self: end;
+    color: var(--muted);
+  }
+
+  .brand:hover,
+  .brand:focus-visible,
+  .info-link:hover,
+  .info-link:focus-visible,
+  .info-link[aria-current='page'] {
     color: var(--ink);
   }
 
-  time {
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
+  .work-dropdown {
+    position: absolute;
+    inset: var(--nav-height) 0 auto;
+    max-height: calc(100dvh - var(--nav-height));
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: var(--space-3);
+    background: var(--paper);
+    overscroll-behavior: contain;
+  }
+
+  .work-dropdown[hidden] {
+    display: none;
+  }
+
+  .work-list {
+    display: grid;
+    grid-column: 2;
+    justify-items: center;
+    min-width: min(30rem, calc(100vw - (2 * var(--pad))));
+    padding-top: var(--space-1);
+  }
+
+  .work-link {
+    max-width: 100%;
+    padding: .2rem var(--space-1);
+    color: var(--muted);
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .work-link:hover,
+  .work-link:focus-visible {
+    color: var(--ink);
   }
 
   @media (max-width: 700px) {
-    nav {
-      gap: var(--space-3);
+    .site-nav,
+    .work-dropdown {
+      column-gap: var(--space-1);
+    }
+
+    .work-list {
+      min-width: min(18rem, calc(100vw - (2 * var(--pad))));
+      padding-top: var(--space-2);
+    }
+
+    .work-link {
+      padding-block: .35rem;
     }
   }
 </style>

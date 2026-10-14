@@ -2,20 +2,15 @@
 import '../styles/reset.css';
 import '../styles/main.css';
 import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import SEO, { type Props as SEOProps } from '../components/SEO.astro';
 
-interface Props {
-  title?: string;
-  description?: string;
+interface Props extends SEOProps {
   hideHeader?: boolean;
-  hideFooter?: boolean;
 }
 
 const {
-  title = 'Sandikala Studio',
-  description = 'Sandikala Studio.',
   hideHeader = false,
-  hideFooter = false,
+  ...seo
 } = Astro.props;
 ---
 
@@ -27,14 +22,13 @@ const {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preload" href="/fonts/PPMori-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
-    <title>{title}</title>
+    <SEO {...seo} />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     {!hideHeader && <Header />}
     <main class="page-container" id="main-content" tabindex="-1">
       <slot />
     </main>
-    {!hideFooter && <Footer />}
   </body>
 </html>

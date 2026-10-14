@@ -1,40 +1,68 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getProjects, type Project } from '../../data/projects';
+import { imageUrl, responsiveImage } from '../../lib/sanity/image';
 
 interface Props {
   project: Project;
+  nextProject?: Project;
 }
 
 export async function getStaticPaths() {
   const projects = await getProjects();
 
-  return projects.map((project) => ({
+  return projects.map((project, index) => ({
     params: { slug: project.slug },
-    props: { project },
+    props: {
+      project,
+      nextProject: projects.length > 1 ? projects[(index + 1) % projects.length] : undefined,
+    },
   }));
 }
 
-const { project } = Astro.props;
+const { project, nextProject } = Astro.props;
 const galleryImages = project.imageGallery.length ? project.imageGallery : project.mainImage ? [project.mainImage] : [];
-const description = project.projectOverview || `${project.title} project by Sandikala Studio.`;
+const description = project.seo?.description || project.projectOverview || `${project.title} — ${project.industry || 'Creative'} project by Sandikala Studio.`;
+const socialImage = project.seo?.image || project.mainImage || galleryImages[0];
+const socialWidth = socialImage ? Math.min(socialImage.width ?? 1200, 1200) : undefined;
 ---
 
 <Layout
-  title={`${project.title} — Sandikala Studio`}
+  title={project.seo?.title || `${project.title} — Sandikala Studio`}
   description={description}
-  hideFooter
+  image={socialImage ? {
+    url: imageUrl(socialImage, 1200),
+    alt: socialImage.alt || `${project.title} — Sandikala Studio`,
+    width: socialWidth,
+    height: socialImage.width && socialImage.height && socialWidth ? Math.round(socialImage.height * socialWidth / socialImage.width) : undefined,
+  } : undefined}
+  breadcrumbs={[{ name: 'Home', path: '/' }, { name: project.title, path: project.href }]}
 >
   <article class="project-detail">
     <header class="project-information">
       <h1>{project.title}</h1>
-      {project.year && <p class="project-year">{project.year}</p>}
-      {project.projectOverview && <p class="project-description">{project.projectOverview}</p>}
-      {project.projectUrl && (
-        <p class="project-link">
-          <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">{project.projectUrl} ↗</a>
-        </p>
-      )}
+      <dl class="project-meta">
+        <div>
+          <dt>Services</dt>
+          <dd>{project.services.join(', ') || '—'}</dd>
+        </div>
+        <div>
+          <dt>Industry</dt>
+          <dd>{project.industry || '—'}</dd>
+        </div>
+        <div>
+          <dt>Year</dt>
+          <dd>{project.year ?? '—'}</dd>
+        </div>
+        <div>
+          <dt>Website</dt>
+          <dd>
+            {project.projectUrl
+              ? <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">{project.projectUrl} <span aria-hidden="true">↗</span></a>
+              : '—'}
+          </dd>
+        </div>
+      </dl>
     </header>
 
     {galleryImages.length > 0 && (
@@ -42,28 +70,41 @@ const description = project.projectOverview || `${project.title} project by Sand
         {galleryImages.map((image, index) => (
           <figure>
             <img
-              src={image.url}
+              {...responsiveImage(image)}
               alt={image.alt.trim() || `${project.title} project image ${index + 1}`}
               loading={index === 0 ? 'eager' : 'lazy'}
+              fetchpriority={index === 0 ? 'high' : 'auto'}
               decoding="async"
             />
           </figure>
         ))}
       </section>
     )}
+
+    {nextProject && (
+      <nav class="next-project" aria-label="Next project">
+        <p>Next project</p>
+        <a href={nextProject.href}>{nextProject.title} <span aria-hidden="true">↗</span></a>
+      </nav>
+    )}
   </article>
 </Layout>
 
 <style>
   .project-detail{width:min(100%,var(--max));margin:0 auto;padding:calc(var(--nav-height) + var(--space-6)) var(--pad) var(--space-7)}
-  .project-information{max-width:52rem;margin-bottom:var(--space-7)}
-  .project-information h1{margin:0 0 var(--space-3);font-size:clamp(2.25rem,5vw,5rem);line-height:1.05;letter-spacing:-.04em}
-  .project-year{margin:0 0 var(--space-5);color:var(--muted);font-variant-numeric:tabular-nums}
-  .project-description{max-width:65ch;margin:0}
-  .project-link{margin:var(--space-4) 0 0;overflow-wrap:anywhere}
-  .project-link a{text-decoration:underline;text-underline-offset:.15em}
+  .project-information{margin-bottom:var(--space-7)}
+  .project-information h1{margin:0 0 var(--space-6);font-size:clamp(2.25rem,5vw,5rem);line-height:1.05;letter-spacing:-.04em}
+  .project-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4);margin:0;padding-top:var(--space-2);border-top:1px solid var(--line)}
+  .project-meta div{min-width:0}
+  .project-meta dt{margin-bottom:var(--space-2);color:var(--muted)}
+  .project-meta dd{margin:0;overflow-wrap:anywhere}
+  .project-meta a{text-decoration:underline;text-underline-offset:.15em}
   .project-gallery figure{margin:0}
   .project-gallery figure+figure{margin-top:var(--space-4)}
   .project-gallery img{width:100%;height:auto}
-  @media(max-width:700px){.project-detail{padding-top:calc(var(--nav-height) + var(--space-4));padding-bottom:var(--space-6)}.project-information{margin-bottom:var(--space-5)}.project-year{margin-bottom:var(--space-4)}.project-gallery figure+figure{margin-top:var(--space-3)}}
+  .next-project{margin-top:var(--space-8)}
+  .next-project p{margin:0 0 var(--space-2);color:var(--muted)}
+  .next-project a{display:inline-block;font-size:clamp(2rem,4vw,4rem);line-height:1.1;letter-spacing:-.04em}
+  .next-project span{white-space:nowrap}
+  @media(max-width:700px){.project-detail{padding-top:calc(var(--nav-height) + var(--space-4));padding-bottom:var(--space-6)}.project-information{margin-bottom:var(--space-5)}.project-information h1{margin-bottom:var(--space-5)}.project-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4) var(--space-2)}.project-gallery figure+figure{margin-top:var(--space-3)}.next-project{margin-top:var(--space-7)}}
 </style>

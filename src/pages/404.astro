@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Page not found — Sandikala Studio" description="This page could not be found. Explore Sandikala Studio’s selected work." noindex>
+  <section class="not-found">
+    <h1>Page not found.</h1>
+    <p>The page you’re looking for isn’t here.</p>
+    <a href="/">Back to selected work ↗</a>
+  </section>
+</Layout>
+
+<style>
+  .not-found{width:min(100%,var(--max));margin:auto;padding:calc(var(--nav-height) + var(--space-6)) var(--pad)}
+  .not-found p{margin:var(--space-2) 0;color:var(--muted)}
+  .not-found a{text-decoration:underline;text-underline-offset:.15em}
+</style>

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "astro",
+  "buildCommand": "npm run check && npm run build",
+  "outputDirectory": "dist",
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/works", "destination": "/#info", "permanent": true },
+    { "source": "/work", "destination": "/#info", "permanent": true },
+    { "source": "/studio", "destination": "/about", "permanent": true },
+    { "source": "/services", "destination": "/about#services-title", "permanent": true },
+    { "source": "/process", "destination": "/about", "permanent": true },
+    { "source": "/contact", "destination": "/about#contact", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}

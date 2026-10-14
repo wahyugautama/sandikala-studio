@@ -1,217 +1,56 @@
-import { isSanityConfigured, sanityClient } from '../lib/sanity';
+import { isSanityConfigured, sanityClient } from '../lib/sanity/client';
+import { projectsQuery, projectSummariesQuery } from '../lib/sanity/queries';
+import { normalizeProject, normalizeProjectSummary } from '../lib/sanity/normalize';
+import type { Project, ProjectSummary } from '../types/project';
 
-export interface ProjectImage { url: string; alt: string }
+export type { Project } from '../types/project';
 
-export interface PortfolioProject {
-  _id: string;
-  title: string;
-  clientName: string;
-  slug: string;
-  href: string;
-  mainImage?: ProjectImage;
-  year?: number;
-  projectUrl?: string;
-  industry: string;
-  services: string[];
-  projectOverview?: string;
-  context?: string;
-  approach?: string;
-  outcome?: string;
-  testimonial?: string;
-  testimonialAuthor?: string;
-  imageGallery: ProjectImage[];
-}
+const allowDemo = import.meta.env.DEV || import.meta.env.SANITY_ALLOW_DEMO_CONTENT === 'true';
 
-export type Project = PortfolioProject;
-type StaticProject = Omit<PortfolioProject, '_id' | 'title' | 'href' | 'mainImage'> & { mainImageUrl: string };
-
-const staticProjects: StaticProject[] = [
-  {
-    clientName: 'North House', slug: 'north-house', year: 2026, industry: 'Architecture',
-    services: ['Art Direction', 'Digital Design', 'Development'],
-    mainImageUrl: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=2000&q=88',
-    projectOverview: 'A restrained digital identity for a contemporary residential architecture practice.',
-    context: 'North House needed a calmer and more editorial way to present its residential portfolio.',
-    approach: 'The system uses generous scale, direct project navigation, and photography-led layouts.',
-    outcome: 'A focused portfolio that keeps the architecture at the center of the experience.',
-    imageGallery: [
-      { url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=86', alt: 'Modern house exterior' },
-      { url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=86', alt: 'Contemporary residential architecture' },
-    ],
-  },
-  {
-    clientName: 'Forma Objects', slug: 'forma-objects', year: 2026, industry: 'Furniture & Objects',
-    services: ['Creative Direction', 'E-commerce', 'Development'],
-    mainImageUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2000&q=88',
-    projectOverview: 'An image-led commerce experience for a collection of furniture and everyday objects.',
-    context: 'Forma needed a digital shop that felt closer to a design publication than a conventional catalogue.',
-    approach: 'Product details and atmospheric photography are arranged in a quiet modular system.',
-    outcome: 'A flexible storefront with a more distinctive and tactile visual rhythm.',
-    imageGallery: [
-      { url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1800&q=86', alt: 'Sculptural furniture interior' },
-      { url: 'https://images.unsplash.com/photo-1615874694520-474822394e73?auto=format&fit=crop&w=1800&q=86', alt: 'Minimal furniture collection' },
-    ],
-  },
-  {
-    clientName: 'Field Notes', slug: 'field-notes', year: 2025, industry: 'Travel & Culture',
-    services: ['Editorial Design', 'UX Design', 'Development'],
-    mainImageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2000&q=88',
-    projectOverview: 'A visual journal documenting remote places, local culture, and slow travel.',
-    context: 'Field Notes required a structure that could hold long-form stories without losing visual impact.',
-    approach: 'The experience combines cinematic imagery with compact editorial typography.',
-    outcome: 'A publishing system that moves naturally between photography, essays, and field guides.',
-    imageGallery: [
-      { url: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=86', alt: 'Mountain landscape and lake' },
-      { url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1800&q=86', alt: 'Remote natural landscape' },
-    ],
-  },
-  {
-    clientName: 'Aperture', slug: 'aperture', year: 2025, industry: 'Photography',
-    services: ['Brand System', 'Portfolio Design', 'Development'],
-    mainImageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=2000&q=88',
-    projectOverview: 'A precise portfolio system for a photography studio working across art and commerce.',
-    context: 'Aperture wanted the website to disappear behind the work while retaining a recognizable voice.',
-    approach: 'Minimal controls and strong sequencing let each photographic series set its own pace.',
-    outcome: 'A fast, adaptable archive designed around image quality and direct navigation.',
-    imageGallery: [
-      { url: 'https://images.unsplash.com/photo-1452780212940-6f5c0d14d848?auto=format&fit=crop&w=1800&q=86', alt: 'Camera and photographic equipment' },
-      { url: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=1800&q=86', alt: 'Photographer working outdoors' },
-    ],
-  },
-  {
-    clientName: 'Common Ground', slug: 'common-ground', year: 2024, industry: 'Fashion & Retail',
-    services: ['Art Direction', 'Digital Design', 'E-commerce'],
-    mainImageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=88',
-    projectOverview: 'A flexible retail platform balancing seasonal campaigns with a permanent product archive.',
-    context: 'Common Ground needed a storefront that could shift tone across collections without losing clarity.',
-    approach: 'A neutral interface supports expressive campaigns, product stories, and concise commerce flows.',
-    outcome: 'A more editorial shopping experience with a consistent underlying system.',
-    imageGallery: [
-      { url: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1800&q=86', alt: 'Fashion retail display' },
-      { url: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1800&q=86', alt: 'Editorial fashion portrait' },
-    ],
-  },
-];
-
-const fallbackProjects: PortfolioProject[] = staticProjects.map(({ mainImageUrl, ...project }) => ({
-  ...project,
-  _id: `static-${project.slug}`,
-  title: project.clientName,
-  href: `/work/${project.slug}`,
-  mainImage: { url: mainImageUrl, alt: `${project.clientName} project image` },
-}));
-
-type SanityProject = {
-  _id?: string;
-  title?: string;
-  clientName?: string;
-  slug?: string;
-  mainImage?: ProjectImage;
-  year?: number;
-  projectUrl?: string;
-  industry?: string;
-  services?: string[];
-  projectOverview?: string;
-  context?: string;
-  approach?: string;
-  outcome?: string;
-  testimonial?: string;
-  testimonialAuthor?: string;
-  imageGallery?: ProjectImage[];
-};
-
-const projectsQuery = `
-  *[_type == "project" && defined(slug.current) && !(_id in path("drafts.**"))]
-  | order(year desc, _createdAt desc) {
-    _id,
-    "title": coalesce(title, clientName, client),
-    "clientName": coalesce(clientName, client, title),
-    "slug": slug.current,
-    "mainImage": {
-      "url": coalesce(mainImage.asset->url, coverImage.asset->url),
-      "alt": coalesce(mainImage.alt, coverImage.alt, clientName, client, title)
-    },
-    year,
-    projectUrl,
-    industry,
-    services,
-    "projectOverview": coalesce(projectOverview, summary),
-    context,
-    approach,
-    outcome,
-    testimonial,
-    testimonialAuthor,
-    "imageGallery": coalesce(imageGallery, [])[] {
-      "url": asset->url,
-      "alt": coalesce(alt, "")
-    }
-  }
-`;
-
-const isString = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
-
-const isHttpUrl = (value: unknown): value is string => {
-  if (!isString(value)) return false;
-
+const fetchProjects = async <T extends ProjectSummary>(
+  query: string,
+  normalize: (value: unknown) => T | null,
+): Promise<T[]> => {
   try {
-    return ['http:', 'https:'].includes(new URL(value).protocol);
-  } catch {
-    return false;
-  }
-};
+    if (!isSanityConfigured || !sanityClient) throw new Error('Sanity project ID and dataset must be configured.');
+    const source: unknown = await sanityClient.fetch(query);
+    if (!Array.isArray(source)) throw new Error('Sanity returned an invalid project response.');
 
-const toPortfolioProject = (project: SanityProject): PortfolioProject | null => {
-  const services = project.services?.filter(isString) ?? [];
-  const imageUrl = project.mainImage?.url;
-
-  if (!isString(project._id) || !isString(project.clientName) || !isString(project.slug)
-    || !isString(project.industry) || !services.length) {
-    return null;
-  }
-
-  const imageGallery = (project.imageGallery ?? []).filter((image): image is ProjectImage => isString(image?.url));
-
-  return {
-    _id: project._id,
-    title: isString(project.title) ? project.title : project.clientName,
-    clientName: project.clientName,
-    slug: project.slug,
-    href: `/work/${project.slug}`,
-    mainImage: isString(imageUrl) ? { url: imageUrl, alt: project.mainImage?.alt || `${project.clientName} project image` } : undefined,
-    year: project.year,
-    projectUrl: isHttpUrl(project.projectUrl) ? project.projectUrl : undefined,
-    industry: project.industry,
-    services,
-    projectOverview: isString(project.projectOverview) ? project.projectOverview : undefined,
-    context: project.context,
-    approach: project.approach,
-    outcome: project.outcome,
-    testimonial: project.testimonial,
-    testimonialAuthor: project.testimonialAuthor,
-    imageGallery,
-  };
-};
-
-let projectsPromise: Promise<PortfolioProject[]> | undefined;
-
-export const getProjects = (): Promise<PortfolioProject[]> => {
-  if (projectsPromise) return projectsPromise;
-
-  projectsPromise = (async () => {
-    if (!isSanityConfigured || !sanityClient) return fallbackProjects;
-
-    try {
-      const sourceProjects = await sanityClient.fetch<SanityProject[]>(projectsQuery);
-      const projects = sourceProjects
-        .map(toPortfolioProject)
-        .filter((project): project is PortfolioProject => project !== null);
-
-      return projects.length ? projects : fallbackProjects;
-    } catch (error) {
-      console.warn('Unable to load published projects from Sanity. Rendering local fallback projects instead.', error);
-      return fallbackProjects;
+    const slugs = new Set<string>();
+    const projects: T[] = [];
+    for (const value of source) {
+      const project = normalize(value);
+      if (!project) {
+        console.warn('Skipping a published project with a missing title or invalid slug.');
+        continue;
+      }
+      if (slugs.has(project.slug)) throw new Error(`Duplicate project slug: ${project.slug}`);
+      slugs.add(project.slug);
+      projects.push(project);
     }
-  })();
+    // An empty published dataset is valid; never replace it with fictional work.
+    if (source.length && !projects.length) throw new Error('No published projects have valid titles and slugs.');
+    return projects;
+  } catch (error) {
+    if (!allowDemo) {
+      throw new Error('Unable to build published Sanity content. Check configuration, network access, and project slugs. The existing deployment should remain live.', { cause: error });
+    }
+    console.warn('Sanity unavailable. Using local demo projects for development.');
+    const { fallbackProjects } = await import('./demo-projects');
+    return fallbackProjects.map(normalize).filter((project): project is T => project !== null);
+  }
+};
 
-  return projectsPromise;
+// Share build requests, but let development reloads fetch current CMS content.
+let projectsPromise: Promise<Project[]> | undefined;
+let summariesPromise: Promise<ProjectSummary[]> | undefined;
+
+export const getProjects = (): Promise<Project[]> => {
+  if (import.meta.env.DEV) return fetchProjects(projectsQuery, normalizeProject);
+  return projectsPromise ??= fetchProjects(projectsQuery, normalizeProject);
+};
+
+export const getProjectSummaries = (): Promise<ProjectSummary[]> => {
+  if (import.meta.env.DEV) return fetchProjects(projectSummariesQuery, normalizeProjectSummary);
+  return summariesPromise ??= fetchProjects(projectSummariesQuery, normalizeProjectSummary);
 };

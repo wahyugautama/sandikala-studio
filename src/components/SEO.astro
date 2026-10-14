@@ -1,0 +1,58 @@
+---
+import { siteConfig } from '../config/site';
+import { canonicalUrl, metaDescription, serializeJsonLd, type Breadcrumb, type SocialImage } from '../lib/seo';
+
+export interface Props {
+  title?: string;
+  description?: string;
+  image?: SocialImage;
+  noindex?: boolean;
+  breadcrumbs?: Breadcrumb[];
+}
+
+const {
+  title = siteConfig.name,
+  description = siteConfig.description,
+  image = { url: siteConfig.socialImage, alt: 'Sandikala — Independent brand & web studio.', width: 1200, height: 630 },
+  noindex = false,
+  breadcrumbs = [],
+} = Astro.props;
+const site = Astro.site ?? new URL(siteConfig.url);
+const canonical = canonicalUrl(Astro.url.pathname, site);
+const summary = metaDescription(description);
+const imageUrl = new URL(image.url, site).href;
+const preventIndexing = noindex || import.meta.env.SITE_NOINDEX === 'true' || process.env.VERCEL_ENV === 'preview';
+const graph: Record<string, unknown>[] = [
+  { '@type': 'Organization', '@id': `${site.href}#organization`, name: siteConfig.name, url: site.href },
+  { '@type': 'WebSite', '@id': `${site.href}#website`, name: siteConfig.name, url: site.href, publisher: { '@id': `${site.href}#organization` } },
+];
+if (breadcrumbs.length) {
+  graph.push({
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map((item, index) => ({
+      '@type': 'ListItem', position: index + 1, name: item.name, item: canonicalUrl(item.path, site),
+    })),
+  });
+}
+---
+
+<title>{title}</title>
+<meta name="description" content={summary} />
+<link rel="canonical" href={canonical} />
+<meta name="robots" content={preventIndexing ? 'noindex, follow' : 'index, follow, max-image-preview:large'} />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteConfig.name} />
+<meta property="og:locale" content={siteConfig.locale} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={summary} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:alt" content={image.alt} />
+{image.width && <meta property="og:image:width" content={String(image.width)} />}
+{image.height && <meta property="og:image:height" content={String(image.height)} />}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={summary} />
+<meta name="twitter:image" content={imageUrl} />
+<meta name="twitter:image:alt" content={image.alt} />
+<script type="application/ld+json" set:html={serializeJsonLd({ '@context': 'https://schema.org', '@graph': graph })} />
