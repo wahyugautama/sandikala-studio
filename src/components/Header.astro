@@ -42,6 +42,10 @@ const projects = await getProjectSummaries();
     const projectLinks = dropdown ? Array.from(dropdown.querySelectorAll<HTMLAnchorElement>('[data-work-link]')) : [];
     if (!header || !toggle || !dropdown || !indicator) return;
 
+    const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+    const infoLink = header.querySelector<HTMLAnchorElement>('.info-link');
+    infoLink?.toggleAttribute('aria-current', currentPath === '/about');
+
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let isOpen = false;
     let transitionRevision = 0;
