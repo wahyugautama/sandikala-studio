@@ -1,0 +1,60 @@
+---
+import { pageTransition } from '../config/page-transition';
+---
+
+<div
+  class="page-wipe"
+  data-page-wipe
+  data-state="idle"
+  aria-hidden="true"
+  transition:persist="page-wipe"
+  style={`--page-wipe-color: ${pageTransition.overlayColor}`}
+>
+  <div class="page-wipe__panel" data-page-wipe-panel></div>
+</div>
+
+<style is:global>
+  .page-wipe {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    visibility: hidden;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .page-wipe[data-state='leaving'],
+  .page-wipe[data-state='covered'],
+  .page-wipe[data-state='entering'] {
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .page-wipe__panel {
+    position: absolute;
+    inset: -1px;
+    background: var(--page-wipe-color);
+    will-change: transform;
+  }
+
+  .page-transition-content {
+    min-height: 100dvh;
+  }
+
+  html.is-page-transitioning,
+  html.is-page-transitioning body {
+    overscroll-behavior: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-wipe {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { startPageTransition } from '../lib/page-transition';
+
+  startPageTransition();
+</script>

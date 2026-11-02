@@ -2,33 +2,47 @@
 import '../styles/reset.css';
 import '../styles/main.css';
 import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import PageTransition from '../components/PageTransition.astro';
 import SEO, { type Props as SEOProps } from '../components/SEO.astro';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props extends SEOProps {
   hideHeader?: boolean;
+  hideFooter?: boolean;
 }
 
-const {
-  hideHeader = false,
-  ...seo
-} = Astro.props;
+const { hideHeader = false, hideFooter = false, ...seo } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preload" href="/fonts/PPMori-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/PPMori-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <meta name="generator" content={Astro.generator} />
     <SEO {...seo} />
+    <ClientRouter />
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {!hideHeader && <Header />}
-    <main class="page-container" id="main-content" tabindex="-1">
-      <slot />
-    </main>
+    <PageTransition />
+    <div class="page-transition-content">
+      <a class="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      {!hideHeader && <Header />}
+      <main class="page-container" id="main-content" tabindex="-1">
+        <slot />
+      </main>
+      {!hideFooter && <Footer />}
+    </div>
   </body>
 </html>

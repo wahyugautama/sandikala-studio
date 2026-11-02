@@ -5,7 +5,7 @@ import { imageUrl, responsiveImage } from '../../lib/sanity/image';
 
 interface Props {
   project: Project;
-  nextProject?: Project;
+  projectNumber: number;
 }
 
 export async function getStaticPaths() {
@@ -13,98 +13,648 @@ export async function getStaticPaths() {
 
   return projects.map((project, index) => ({
     params: { slug: project.slug },
-    props: {
-      project,
-      nextProject: projects.length > 1 ? projects[(index + 1) % projects.length] : undefined,
-    },
+    props: { project, projectNumber: index + 1 },
   }));
 }
 
-const { project, nextProject } = Astro.props;
-const galleryImages = project.imageGallery.length ? project.imageGallery : project.mainImage ? [project.mainImage] : [];
-const description = project.seo?.description || project.projectOverview || `${project.title} — ${project.industry || 'Creative'} project by Sandikala Studio.`;
+const { project, projectNumber } = Astro.props;
+const galleryImages = project.mainImage
+  ? [
+      project.mainImage,
+      ...project.imageGallery.filter(
+        (image) => image.url !== project.mainImage?.url,
+      ),
+    ]
+  : project.imageGallery;
+const selectedImage = galleryImages[0];
+const selectedImageProps = selectedImage
+  ? responsiveImage(selectedImage)
+  : undefined;
+const description =
+  project.seo?.description ||
+  project.projectOverview ||
+  `${project.title} — ${project.industry || 'Creative'} project by Sandikala Studio.`;
 const socialImage = project.seo?.image || project.mainImage || galleryImages[0];
-const socialWidth = socialImage ? Math.min(socialImage.width ?? 1200, 1200) : undefined;
+const socialWidth = socialImage
+  ? Math.min(socialImage.width ?? 1200, 1200)
+  : undefined;
 ---
 
 <Layout
   title={project.seo?.title || `${project.title} — Sandikala Studio`}
   description={description}
-  image={socialImage ? {
-    url: imageUrl(socialImage, 1200),
-    alt: socialImage.alt || `${project.title} — Sandikala Studio`,
-    width: socialWidth,
-    height: socialImage.width && socialImage.height && socialWidth ? Math.round(socialImage.height * socialWidth / socialImage.width) : undefined,
-  } : undefined}
-  breadcrumbs={[{ name: 'Home', path: '/' }, { name: project.title, path: project.href }]}
+  image={
+    socialImage
+      ? {
+          url: imageUrl(socialImage, 1200),
+          alt: socialImage.alt || `${project.title} — Sandikala Studio`,
+          width: socialWidth,
+          height:
+            socialImage.width && socialImage.height && socialWidth
+              ? Math.round(
+                  (socialImage.height * socialWidth) / socialImage.width,
+                )
+              : undefined,
+        }
+      : undefined
+  }
+  breadcrumbs={[
+    { name: 'Home', path: '/' },
+    { name: project.title, path: project.href },
+  ]}
+  hideHeader
+  hideFooter
 >
   <article class="project-detail">
-    <header class="project-information">
-      <h1>{project.title}</h1>
-      <dl class="project-meta">
-        <div>
-          <dt>Services</dt>
-          <dd>{project.services.join(', ') || '—'}</dd>
+    <div class="project-viewer">
+      <header class="project-information">
+        <span class="project-number" aria-label={`Project ${projectNumber}`}>
+          {projectNumber}
+        </span>
+        <div class="project-summary">
+          <h1>{project.clientName}</h1>
+          <ul>
+            <li>{project.industry || '—'}</li>
+            {project.services.map((service) => (
+              <li>{service}</li>
+            ))}
+            <li>{project.year ?? '—'}</li>
+            {project.projectUrl && (
+              <li>
+                <a
+                  href={project.projectUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Visit website <span aria-hidden="true">↗</span>
+                </a>
+              </li>
+            )}
+          </ul>
         </div>
-        <div>
-          <dt>Industry</dt>
-          <dd>{project.industry || '—'}</dd>
-        </div>
-        <div>
-          <dt>Year</dt>
-          <dd>{project.year ?? '—'}</dd>
-        </div>
-        <div>
-          <dt>Website</dt>
-          <dd>
-            {project.projectUrl
-              ? <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">{project.projectUrl} <span aria-hidden="true">↗</span></a>
-              : '—'}
-          </dd>
-        </div>
-      </dl>
-    </header>
+        <a class="project-back" href="/">
+          Close
+        </a>
+      </header>
 
-    {galleryImages.length > 0 && (
-      <section class="project-gallery" aria-label={`${project.title} image gallery`}>
-        {galleryImages.map((image, index) => (
-          <figure>
-            <img
-              {...responsiveImage(image)}
-              alt={image.alt.trim() || `${project.title} project image ${index + 1}`}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              fetchpriority={index === 0 ? 'high' : 'auto'}
-              decoding="async"
-            />
-          </figure>
-        ))}
-      </section>
-    )}
+      {galleryImages.length > 0 && (
+        <>
+          <div
+            class="project-thumbnails"
+            aria-label={`${project.title} gallery images`}
+          >
+            {galleryImages.map((image, index) => {
+              const fullImage = responsiveImage(image);
+              const alt =
+                image.alt.trim() ||
+                `${project.title} project image ${index + 1}`;
+              return (
+                <button
+                  type="button"
+                  class="project-thumbnail"
+                  aria-label={`Show image ${index + 1} of ${galleryImages.length}`}
+                  aria-pressed={index === 0 ? 'true' : 'false'}
+                  data-gallery-target={index}
+                  data-full-src={fullImage.src}
+                  data-full-srcset={fullImage.srcset}
+                  data-full-sizes={fullImage.sizes}
+                  data-full-width={fullImage.width}
+                  data-full-height={fullImage.height}
+                  data-full-alt={alt}
+                >
+                  <img
+                    src={imageUrl(image, 320)}
+                    alt=""
+                    width={image.width}
+                    height={image.height}
+                    loading={index < 3 ? 'eager' : 'lazy'}
+                    decoding="async"
+                  />
+                </button>
+              );
+            })}
+          </div>
 
-    {nextProject && (
-      <nav class="next-project" aria-label="Next project">
-        <p>Next project</p>
-        <a href={nextProject.href}>{nextProject.title} <span aria-hidden="true">↗</span></a>
-      </nav>
-    )}
+          {selectedImage && selectedImageProps && (
+            <figure class="project-selected-image" aria-live="polite">
+              <img
+                {...selectedImageProps}
+                data-selected-project-image
+                data-project-slug={project.slug}
+                alt={
+                  selectedImage.alt.trim() || `${project.title} project image 1`
+                }
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+              />
+            </figure>
+          )}
+        </>
+      )}
+    </div>
   </article>
 </Layout>
 
 <style>
-  .project-detail{width:min(100%,var(--max));margin:0 auto;padding:calc(var(--nav-height) + var(--space-6)) var(--pad) var(--space-7)}
-  .project-information{margin-bottom:var(--space-7)}
-  .project-information h1{margin:0 0 var(--space-6);font-size:clamp(2.25rem,5vw,5rem);line-height:1.05;letter-spacing:-.04em}
-  .project-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4);margin:0;padding-top:var(--space-2);border-top:1px solid var(--line)}
-  .project-meta div{min-width:0}
-  .project-meta dt{margin-bottom:var(--space-2);color:var(--muted)}
-  .project-meta dd{margin:0;overflow-wrap:anywhere}
-  .project-meta a{text-decoration:underline;text-underline-offset:.15em}
-  .project-gallery figure{margin:0}
-  .project-gallery figure+figure{margin-top:var(--space-4)}
-  .project-gallery img{width:100%;height:auto}
-  .next-project{margin-top:var(--space-8)}
-  .next-project p{margin:0 0 var(--space-2);color:var(--muted)}
-  .next-project a{display:inline-block;font-size:clamp(2rem,4vw,4rem);line-height:1.1;letter-spacing:-.04em}
-  .next-project span{white-space:nowrap}
-  @media(max-width:700px){.project-detail{padding-top:calc(var(--nav-height) + var(--space-4));padding-bottom:var(--space-6)}.project-information{margin-bottom:var(--space-5)}.project-information h1{margin-bottom:var(--space-5)}.project-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4) var(--space-2)}.project-gallery figure+figure{margin-top:var(--space-3)}.next-project{margin-top:var(--space-7)}}
+  .project-detail {
+    width: min(100%, var(--max));
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0 auto;
+    padding: var(--space-4) var(--pad);
+    overflow: hidden;
+  }
+  .project-viewer {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) minmax(0, 2.5fr) minmax(
+        12rem,
+        1fr
+      );
+    gap: var(--space-4);
+    align-items: stretch;
+    height: 100%;
+  }
+  .project-information {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .project-number {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    aspect-ratio: 1;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--muted);
+  }
+  .project-summary {
+    margin: auto 0;
+  }
+  .project-summary h1 {
+    margin: 0 0 var(--space-2);
+    font: inherit;
+    color: var(--ink);
+  }
+  .project-summary ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+  }
+  .project-summary a,
+  .project-back {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+  .project-back {
+    align-self: flex-start;
+  }
+  .project-thumbnails {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0;
+    min-height: 0;
+  }
+  .project-thumbnail {
+    width: 5rem;
+    height: 3.75rem;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+  }
+  .project-thumbnail[aria-pressed='true'] {
+    border-color: var(--ink);
+  }
+  .project-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .project-selected-image {
+    grid-column: 2;
+    grid-row: 1;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+  }
+  .project-selected-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+  @media (max-width: 700px) {
+    .project-detail {
+      padding: var(--space-3) var(--pad);
+    }
+    .project-viewer {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: var(--space-3);
+    }
+    .project-information {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: var(--space-3);
+      height: auto;
+    }
+    .project-summary {
+      margin: 0;
+    }
+    .project-back {
+      align-self: start;
+    }
+    .project-selected-image {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    .project-thumbnails {
+      grid-column: 1;
+      grid-row: 3;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: flex-start;
+      overflow-x: auto;
+    }
+    .project-thumbnail {
+      flex: 0 0 5rem;
+    }
+  }
 </style>
+
+<script>
+  import gsap from 'gsap';
+  import Flip from 'gsap/Flip';
+
+  gsap.registerPlugin(Flip);
+
+  const initializeProjectPage = () => {
+    const projectPage = document.querySelector<HTMLElement>('.project-detail');
+    if (!projectPage || projectPage.dataset.pageReady === 'true') return;
+    projectPage.dataset.pageReady = 'true';
+
+    const thumbnailButtons = [
+      ...document.querySelectorAll<HTMLButtonElement>('.project-thumbnail'),
+    ];
+    const selectedImage = document.querySelector<HTMLImageElement>(
+      '[data-selected-project-image]',
+    );
+    const projectViewer =
+      document.querySelector<HTMLElement>('.project-viewer');
+    const projectBack =
+      document.querySelector<HTMLAnchorElement>('.project-back');
+    let activeIndex = 0;
+    let displayedIndex = 0;
+    let imageRequestId = 0;
+    let wheelLocked = false;
+    let crossPageTransitionActive = false;
+
+    const selectImage = async (index: number) => {
+      const button = thumbnailButtons[index];
+      if (
+        !selectedImage ||
+        !button ||
+        crossPageTransitionActive ||
+        (index === activeIndex &&
+          button.getAttribute('aria-pressed') === 'true')
+      )
+        return;
+
+      const { fullSrc, fullSrcset, fullSizes, fullWidth, fullHeight, fullAlt } =
+        button.dataset;
+      if (!fullSrc) return;
+
+      activeIndex = index;
+      thumbnailButtons.forEach((thumbnail, thumbnailIndex) => {
+        thumbnail.setAttribute(
+          'aria-pressed',
+          String(thumbnailIndex === activeIndex),
+        );
+      });
+
+      const requestId = ++imageRequestId;
+      const nextImage = new Image();
+      if (fullSizes) nextImage.sizes = fullSizes;
+      if (fullSrcset) nextImage.srcset = fullSrcset;
+      nextImage.src = fullSrc;
+
+      try {
+        await nextImage.decode();
+      } catch {
+        if (requestId === imageRequestId) {
+          activeIndex = displayedIndex;
+          thumbnailButtons.forEach((thumbnail, thumbnailIndex) => {
+            thumbnail.setAttribute(
+              'aria-pressed',
+              String(thumbnailIndex === displayedIndex),
+            );
+          });
+        }
+        return;
+      }
+      if (requestId !== imageRequestId || crossPageTransitionActive) return;
+
+      selectedImage.src = fullSrc;
+      if (fullSrcset) selectedImage.srcset = fullSrcset;
+      else selectedImage.removeAttribute('srcset');
+      if (fullSizes) selectedImage.sizes = fullSizes;
+      else selectedImage.removeAttribute('sizes');
+      if (fullWidth) selectedImage.width = Number(fullWidth);
+      else selectedImage.removeAttribute('width');
+      if (fullHeight) selectedImage.height = Number(fullHeight);
+      else selectedImage.removeAttribute('height');
+      selectedImage.alt = fullAlt || '';
+      displayedIndex = index;
+    };
+
+    const handleThumbnailSelection = (event: Event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      const index = Number(button.dataset.galleryTarget);
+      void selectImage(index);
+    };
+
+    thumbnailButtons.forEach((button) =>
+      button.addEventListener('click', handleThumbnailSelection),
+    );
+
+    const handleGalleryWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      if (
+        wheelLocked ||
+        crossPageTransitionActive ||
+        thumbnailButtons.length < 2
+      )
+        return;
+
+      const nextIndex = Math.max(
+        0,
+        Math.min(
+          thumbnailButtons.length - 1,
+          activeIndex + Math.sign(event.deltaY),
+        ),
+      );
+      if (nextIndex === activeIndex) return;
+
+      wheelLocked = true;
+      void selectImage(nextIndex);
+      window.setTimeout(() => {
+        wheelLocked = false;
+      }, 450);
+    };
+
+    projectViewer?.addEventListener('wheel', handleGalleryWheel, {
+      passive: false,
+    });
+
+    interface StoredHomeState {
+      slug: string;
+      scrollY: number;
+      gridView: boolean;
+    }
+
+    const handleProjectClose = (event: MouseEvent) => {
+      if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        event.button !== 0
+      )
+        return;
+      if (
+        !selectedImage ||
+        crossPageTransitionActive ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      )
+        return;
+
+      const activeThumbnail = thumbnailButtons[displayedIndex];
+      const containerRect = selectedImage.getBoundingClientRect();
+      const naturalWidth =
+        Number(activeThumbnail?.dataset.fullWidth) ||
+        selectedImage.naturalWidth;
+      const naturalHeight =
+        Number(activeThumbnail?.dataset.fullHeight) ||
+        selectedImage.naturalHeight;
+      if (
+        !naturalWidth ||
+        !naturalHeight ||
+        !containerRect.width ||
+        !containerRect.height
+      )
+        return;
+
+      const scale = Math.min(
+        containerRect.width / naturalWidth,
+        containerRect.height / naturalHeight,
+      );
+      const width = naturalWidth * scale;
+      const height = naturalHeight * scale;
+      const rect = {
+        left: containerRect.left + (containerRect.width - width) / 2,
+        top: containerRect.top + (containerRect.height - height) / 2,
+        width,
+        height,
+      };
+
+      let homeState: StoredHomeState = {
+        slug: selectedImage.dataset.projectSlug || '',
+        scrollY: 0,
+        gridView: false,
+      };
+      try {
+        const storedHomeState = sessionStorage.getItem('project-home-state');
+        if (storedHomeState)
+          homeState = JSON.parse(storedHomeState) as StoredHomeState;
+        sessionStorage.setItem(
+          'project-image-return-transition',
+          JSON.stringify({
+            slug: selectedImage.dataset.projectSlug,
+            src: selectedImage.currentSrc || selectedImage.src,
+            scrollY: homeState.scrollY,
+            gridView: homeState.gridView,
+            viewport: { width: window.innerWidth, height: window.innerHeight },
+            rect,
+          }),
+        );
+      } catch {
+        // Navigation still works when storage is unavailable.
+      }
+    };
+
+    projectBack?.addEventListener('click', handleProjectClose);
+
+    interface StoredImageTransition {
+      slug: string;
+      src: string;
+      viewport?: { width: number; height: number };
+      rect: { left: number; top: number; width: number; height: number };
+    }
+
+    const waitForStableLayout = async () => {
+      await document.fonts?.ready;
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+    };
+
+    const runEntryTransition = async () => {
+      let storedTransition: StoredImageTransition | undefined;
+      try {
+        const storedValue = sessionStorage.getItem('project-image-transition');
+        sessionStorage.removeItem('project-image-transition');
+        if (storedValue)
+          storedTransition = JSON.parse(storedValue) as StoredImageTransition;
+      } catch {
+        return;
+      }
+
+      if (
+        !selectedImage ||
+        !storedTransition ||
+        storedTransition.slug !== selectedImage.dataset.projectSlug ||
+        !storedTransition.src
+      )
+        return;
+      if (document.documentElement.classList.contains('is-page-transitioning'))
+        return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      crossPageTransitionActive = true;
+
+      const transitionImage = new Image();
+      transitionImage.src = storedTransition.src;
+      transitionImage.alt = '';
+      transitionImage.setAttribute('aria-hidden', 'true');
+      Object.assign(transitionImage.style, {
+        position: 'fixed',
+        left: '0px',
+        top: '0px',
+        width: '0px',
+        height: '0px',
+        zIndex: '1000',
+        objectFit: 'cover',
+        pointerEvents: 'none',
+        margin: '0',
+        willChange: 'transform',
+      });
+
+      const viewportScaleX = storedTransition.viewport?.width
+        ? window.innerWidth / storedTransition.viewport.width
+        : 1;
+      const viewportScaleY = storedTransition.viewport?.height
+        ? window.innerHeight / storedTransition.viewport.height
+        : 1;
+      gsap.set(transitionImage, {
+        left: storedTransition.rect.left * viewportScaleX,
+        top: storedTransition.rect.top * viewportScaleY,
+        width: storedTransition.rect.width * viewportScaleX,
+        height: storedTransition.rect.height * viewportScaleY,
+      });
+      document.body.append(transitionImage);
+      selectedImage.style.visibility = 'hidden';
+
+      const cleanupImmediately = () => {
+        selectedImage.style.removeProperty('visibility');
+        transitionImage.remove();
+        crossPageTransitionActive = false;
+      };
+
+      try {
+        await Promise.all([
+          transitionImage.decode(),
+          selectedImage.decode(),
+          waitForStableLayout(),
+        ]);
+      } catch {
+        cleanupImmediately();
+        return;
+      }
+
+      const animateTransition = () => {
+        const containerRect = selectedImage.getBoundingClientRect();
+        const firstThumbnail = thumbnailButtons[0];
+        const naturalWidth =
+          Number(firstThumbnail?.dataset.fullWidth) ||
+          transitionImage.naturalWidth;
+        const naturalHeight =
+          Number(firstThumbnail?.dataset.fullHeight) ||
+          transitionImage.naturalHeight;
+        if (
+          !naturalWidth ||
+          !naturalHeight ||
+          !containerRect.width ||
+          !containerRect.height
+        ) {
+          cleanupImmediately();
+          return;
+        }
+
+        const scale = Math.min(
+          containerRect.width / naturalWidth,
+          containerRect.height / naturalHeight,
+        );
+        const targetWidth = naturalWidth * scale;
+        const targetHeight = naturalHeight * scale;
+        const targetLeft =
+          containerRect.left + (containerRect.width - targetWidth) / 2;
+        const targetTop =
+          containerRect.top + (containerRect.height - targetHeight) / 2;
+        const state = Flip.getState(transitionImage);
+
+        gsap.set(transitionImage, {
+          left: targetLeft,
+          top: targetTop,
+          width: targetWidth,
+          height: targetHeight,
+        });
+
+        let cleanedUp = false;
+        let activeCrossPageFlip: gsap.core.Timeline | undefined;
+        const cleanup = () => {
+          if (cleanedUp) return;
+          cleanedUp = true;
+          selectedImage.style.removeProperty('visibility');
+          transitionImage.remove();
+          crossPageTransitionActive = false;
+          window.removeEventListener('resize', handleResize);
+        };
+        const handleResize = () => {
+          activeCrossPageFlip?.progress(1).kill();
+          cleanup();
+        };
+        window.addEventListener('resize', handleResize, { once: true });
+
+        activeCrossPageFlip = Flip.from(state, {
+          duration: 0.82,
+          ease: 'power2.inOut',
+          absolute: true,
+          scale: true,
+          prune: true,
+          onComplete: cleanup,
+          onInterrupt: cleanup,
+        });
+      };
+
+      animateTransition();
+    };
+
+    void runEntryTransition();
+  };
+
+  document.addEventListener('astro:page-load', initializeProjectPage);
+  initializeProjectPage();
+</script>

@@ -1,0 +1,47 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<p class={className} data-split-text-reveal><slot /></p>
+
+<script>
+  import gsap from 'gsap';
+  import ScrollTrigger from 'gsap/ScrollTrigger';
+  import SplitText from 'gsap/SplitText';
+
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+
+  const initializeSplitTextReveals = () => {
+    const paragraphs = document.querySelectorAll<HTMLElement>('[data-split-text-reveal]:not([data-split-ready])');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    paragraphs.forEach((paragraph) => {
+      paragraph.dataset.splitReady = 'true';
+      if (reduceMotion) return;
+
+      SplitText.create(paragraph, {
+        type: 'lines',
+        mask: 'lines',
+        autoSplit: true,
+        onSplit: (split) => gsap.from(split.lines, {
+          yPercent: 100,
+          duration: 0.8,
+          ease: 'power3.out',
+          stagger: 0.08,
+          scrollTrigger: {
+            trigger: paragraph,
+            start: 'top 88%',
+            once: true,
+          },
+        }),
+      });
+    });
+  };
+
+  document.addEventListener('astro:page-load', initializeSplitTextReveals);
+  initializeSplitTextReveals();
+</script>
