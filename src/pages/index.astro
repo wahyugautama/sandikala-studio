@@ -1,21 +1,50 @@
-<p class="logo">
-  Sandikala Studio<sup>&reg;</sup>
-</p>
-<h1>Our website needs a little love, too.</h1>
-<div class="content">
-  <p>
-    We've been busy creating for others. Now we're redesigning our own website.
-    Still here and open for new projects.
-  </p>
-  <div class="links">
-    <a href="mailto:hello@sandikalastudio.com">Contact us</a>
-    <a href="https://cal.com/sandikalastudio/discoverycall" target="_blank">
-      Let's talk
-    </a>
-  </div>
-</div>
+---
+const title = 'Sandikala Studio — Website Redesign';
+const description =
+  "We're giving our website a little love. Still here and open for new projects.";
+---
 
-<style scoped>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f0f0f0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+
+  <body>
+    <main class="page">
+      <p class="logo">Sandikala Studio</p>
+
+      <h1>Our website needs a little love, too.</h1>
+
+      <div class="content">
+        <p>
+          We've been busy creating for others. <br />
+          Now we're redesigning our own website.
+          <br /> Still here and open for new projects.
+        </p>
+
+        <div class="links">
+          <a href="mailto:hello@sandikalastudio.com">
+            hello@sandikalastudio.com
+          </a>
+          <a
+            href="https://cal.com/sandikalastudio/discoverycall"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Schedule a call
+          </a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<style>
   @font-face {
     font-family: 'PP Mori';
     src: url('/fonts/PPMori-Regular.woff2') format('woff2');
@@ -23,20 +52,38 @@
     font-weight: 400;
     font-display: swap;
   }
-  body {
+
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  :global(html) {
+    margin: 0;
+    min-height: 100%;
+  }
+
+  :global(body) {
+    margin: 0;
+    min-height: 100%;
     background-color: #f0f0f0;
     color: #7b7864;
     font-family: 'PP Mori', sans-serif;
+  }
+
+  .page {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 1rem;
+
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 1rem;
     align-items: center;
-    gap: 1rem;
-    height: 100vh;
-    overflow: hidden;
+    gap: 2rem;
+
     text-align: center;
   }
+
   h1,
   p {
     margin: 0;
@@ -45,30 +92,62 @@
     line-height: 1.25;
   }
 
+  .logo sup {
+    font-size: 0.5em;
+    vertical-align: super;
+    margin-left: 2px;
+  }
+
   h1 {
     text-transform: uppercase;
-    font-size: 6.5rem;
+    font-size: clamp(2.5rem, 8vw, 6.5rem);
     font-weight: 300;
     max-width: 15ch;
     line-height: 0.8;
     letter-spacing: -0.03em;
+    overflow-wrap: break-word;
   }
+
   .content {
     max-width: 30ch;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
+
   .links {
     display: flex;
+    justify-content: center;
     gap: 1rem;
-    margin-bottom: 4rem;
     margin-top: 1rem;
+    margin-bottom: 2rem;
   }
 
   a {
     text-decoration: underline;
-    color: #7b7864;
+    text-underline-offset: 0.15em;
+    color: inherit;
     font-size: 0.875rem;
+  }
+
+  a:hover {
+    opacity: 0.6;
+  }
+
+  @media (max-width: 767px) {
+    .page {
+      padding: 1rem;
+      gap: 2rem;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 10vw, 4rem);
+      line-height: 0.9;
+      max-width: 12ch;
+    }
+
+    .links {
+      margin-bottom: 1rem;
+    }
   }
 </style>
