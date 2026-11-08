@@ -1,507 +1,74 @@
----
-import Layout from '../layouts/Layout.astro';
-import { getProjects } from '../data/projects';
-import { imageUrl } from '../lib/sanity/image';
-
-const projects = await getProjects();
----
-
-<Layout
-  title="Sandikala — Independent Brand & Web Studio"
-  description="Sandikala helps established businesses bring their brand and website in line with where they are going."
->
-  <div class="home-page">
-    <section class="home-hero" aria-labelledby="home-title">
-      <h1 id="home-title">
-        An independent creative practice crafting distinctive brands and
-        websites. Small by choice, obsessive by nature.
-      </h1>
-    </section>
-
-    <section class="selected-work" id="info" aria-label="Selected projects">
-      <div class="work-view-controls" aria-label="Project view">
-        <button type="button" data-project-view="list" aria-pressed="true">
-          List
-        </button>
-        <button type="button" data-project-view="grid" aria-pressed="false">
-          Grid
-        </button>
-      </div>
-      <div class="work-table" aria-label="Selected projects">
-        {projects.map((project, index) => {
-          return (
-            <a
-              class="work-row"
-              href={project.href}
-              aria-label={`View ${project.clientName} case study`}
-              data-project-transition={project.slug}
-            >
-              <span class="work-number">{index + 1}</span>
-              <span class="work-details">
-                <span class="work-client">{project.clientName}</span>
-                <span>{project.industry || '—'}</span>
-                <span>{project.services.join(', ') || '—'}</span>
-              </span>
-              <span class="work-media">
-                {project.mainImage && (
-                  <img
-                    data-project-thumbnail
-                    src={imageUrl(project.mainImage, 960)}
-                    alt={
-                      project.mainImage.alt ||
-                      `${project.clientName} project thumbnail`
-                    }
-                    width={project.mainImage.width}
-                    height={project.mainImage.height}
-                    loading="lazy"
-                  />
-                )}
-              </span>
-            </a>
-          );
-        })}
-      </div>
-    </section>
+<p class="logo">
+  Sandikala Studio<sup>&reg;</sup>
+</p>
+<h1>Our website needs a little love, too.</h1>
+<div class="content">
+  <p>
+    We've been busy creating for others. Now we're redesigning our own website.
+    Still here and open for new projects.
+  </p>
+  <div class="links">
+    <a href="mailto:hello@sandikalastudio.com">Contact us</a>
+    <a href="https://cal.com/sandikalastudio/discoverycall" target="_blank">
+      Let's talk
+    </a>
   </div>
-</Layout>
+</div>
 
-<style>
-  .home-page {
-    display: grid;
-    gap: var(--space-7);
-    width: min(100%, var(--max));
-    margin: auto;
-    padding: var(--space-6) var(--pad) var(--space-2);
+<style scoped>
+  @font-face {
+    font-family: 'PP Mori';
+    src: url('/fonts/PPMori-Regular.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
   }
-  .home-hero {
-    display: grid;
-    place-items: center;
-    min-height: 35vh;
-    padding-bottom: var(--space-2);
+  body {
+    background-color: #f0f0f0;
+    color: #7b7864;
+    font-family: 'PP Mori', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem;
+    align-items: center;
+    gap: 1rem;
+    height: 100vh;
+    overflow: hidden;
     text-align: center;
   }
-  .home-hero h1 {
-    max-width: 35ch;
+  h1,
+  p {
     margin: 0;
-    color: var(--ink);
+    padding: 0;
+    font-size: 0.875rem;
+    line-height: 1.25;
   }
-  .selected-work {
-    min-width: 0;
+
+  h1 {
+    text-transform: uppercase;
+    font-size: 6.5rem;
+    font-weight: 300;
+    max-width: 15ch;
+    line-height: 0.8;
+    letter-spacing: -0.03em;
   }
-  .work-table {
-    background: repeating-linear-gradient(
-        to right,
-        var(--line) 0 1px,
-        transparent 1px 9px
-      )
-      top/100% 1px no-repeat;
-  }
-  .work-row {
-    display: grid;
-    grid-template-columns: minmax(2.5rem, 0.3fr) minmax(0, 1.5fr) minmax(
-        12rem,
-        1.5fr
-      );
-    align-items: start;
-    padding: var(--space-2) 0;
-    color: var(--ink);
-  }
-  .work-view-controls {
+  .content {
+    max-width: 30ch;
     display: flex;
-    justify-content: flex-end;
-    gap: var(--space-2);
-    margin-bottom: var(--space-2);
+    flex-direction: column;
+    align-items: center;
   }
-  .work-view-controls button {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
+  .links {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 4rem;
+    margin-top: 1rem;
   }
-  .work-view-controls button[aria-pressed='true'] {
-    color: var(--ink);
+
+  a {
     text-decoration: underline;
-    text-underline-offset: 0.2em;
-  }
-  .work-number {
-    display: inline-grid;
-    place-items: center;
-    width: 1.5rem;
-    aspect-ratio: 1;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    color: var(--muted);
-  }
-  .work-details {
-    display: grid;
-    align-content: start;
-  }
-  .work-details > span:not(.work-client) {
-    color: var(--muted);
-    transition: color var(--duration-fast) ease;
-  }
-  .work-row:hover .work-details > span,
-  .work-row:focus-visible .work-details > span {
-    color: var(--ink);
-  }
-  .work-media {
-    display: block;
-    justify-self: end;
-    width: 8rem;
-    height: 6rem;
-    overflow: hidden;
-    background: var(--line);
-  }
-  .work-media:empty {
-    visibility: hidden;
-  }
-  .work-media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .work-table.is-grid-view {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-4);
-    background: none;
-  }
-  .work-table.is-grid-view .work-row {
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: var(--space-2);
-    align-content: start;
-    padding: 0;
-  }
-  .work-table.is-grid-view .work-media {
-    grid-column: 1/-1;
-    grid-row: 1;
-    justify-self: stretch;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4/3;
-    margin-bottom: var(--space-2);
-  }
-  .work-table.is-grid-view .work-number {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .work-table.is-grid-view .work-details {
-    grid-column: 2;
-    grid-row: 2;
-  }
-  @media (max-width: 700px) {
-    .home-page {
-      display: block;
-      padding: var(--space-4) var(--pad) var(--space-6);
-    }
-    .home-hero {
-      padding-bottom: var(--space-7);
-    }
-    .work-row {
-      grid-template-columns: 2rem minmax(0, 1fr) 8rem;
-      gap: var(--space-2);
-      padding: var(--space-3) 0;
-    }
-    .work-table.is-grid-view {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--space-4) var(--space-2);
-    }
+    color: #7b7864;
+    font-size: 0.875rem;
   }
 </style>
-
-<script>
-  import gsap from 'gsap';
-  import Flip from 'gsap/Flip';
-
-  gsap.registerPlugin(Flip);
-
-  const initializeHomePage = () => {
-    const homePage = document.querySelector<HTMLElement>('.home-page');
-    if (!homePage || homePage.dataset.pageReady === 'true') return;
-    homePage.dataset.pageReady = 'true';
-
-    const workTable = document.querySelector<HTMLElement>('.work-table');
-    const viewButtons = [
-      ...document.querySelectorAll<HTMLButtonElement>('[data-project-view]'),
-    ];
-    const rows = [...document.querySelectorAll<HTMLElement>('.work-row')];
-    let activeLayoutFlip: gsap.core.Timeline | undefined;
-    let crossPageTransitionActive = false;
-
-    const getAnimatedElements = () => {
-      const projectElements = rows.flatMap((row) => [
-        row,
-        ...row.querySelectorAll<HTMLElement>(
-          '.work-number, .work-details, .work-media',
-        ),
-      ]);
-      const footer = document.querySelector<HTMLElement>('.site-footer');
-      return footer ? [...projectElements, footer] : projectElements;
-    };
-
-    const handleViewChange = (event: Event) => {
-      const button = event.currentTarget as HTMLButtonElement;
-      const showGrid = button.dataset.projectView === 'grid';
-      if (
-        !workTable ||
-        crossPageTransitionActive ||
-        workTable.classList.contains('is-grid-view') === showGrid
-      )
-        return;
-
-      const animatedElements = getAnimatedElements();
-      const state = Flip.getState(animatedElements);
-      activeLayoutFlip?.progress(1).kill();
-      Flip.killFlipsOf(animatedElements);
-      workTable.classList.toggle('is-grid-view', showGrid);
-      viewButtons.forEach((viewButton) => {
-        viewButton.setAttribute('aria-pressed', String(viewButton === button));
-      });
-
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-      activeLayoutFlip = Flip.from(state, {
-        duration: 0.72,
-        ease: 'power2.inOut',
-        absolute: '.work-media',
-        nested: true,
-        prune: true,
-        onStart: () => gsap.set(animatedElements, { willChange: 'transform' }),
-        onComplete: () => {
-          gsap.set(animatedElements, { clearProps: 'willChange' });
-          activeLayoutFlip = undefined;
-        },
-        onInterrupt: () =>
-          gsap.set(animatedElements, { clearProps: 'willChange' }),
-      });
-    };
-
-    viewButtons.forEach((button) =>
-      button.addEventListener('click', handleViewChange),
-    );
-
-    rows.forEach((row) => {
-      row.addEventListener('click', (event) => {
-        if (
-          event.metaKey ||
-          event.ctrlKey ||
-          event.shiftKey ||
-          event.altKey ||
-          event.button !== 0
-        )
-          return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-          return;
-
-        const thumbnail = row.querySelector<HTMLImageElement>(
-          '[data-project-thumbnail]',
-        );
-        const slug = row.dataset.projectTransition;
-        if (!thumbnail || !slug) return;
-
-        const rect = thumbnail.getBoundingClientRect();
-        try {
-          sessionStorage.setItem(
-            'project-home-state',
-            JSON.stringify({
-              slug,
-              scrollY: window.scrollY,
-              gridView: workTable?.classList.contains('is-grid-view') ?? false,
-            }),
-          );
-          sessionStorage.setItem(
-            'project-image-transition',
-            JSON.stringify({
-              slug,
-              src: thumbnail.currentSrc || thumbnail.src,
-              viewport: {
-                width: window.innerWidth,
-                height: window.innerHeight,
-              },
-              rect: {
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height,
-              },
-            }),
-          );
-        } catch {
-          // Navigation still works when storage is unavailable.
-        }
-      });
-    });
-
-    interface StoredReturnTransition {
-      slug: string;
-      src: string;
-      scrollY: number;
-      gridView: boolean;
-      viewport?: { width: number; height: number };
-      rect: { left: number; top: number; width: number; height: number };
-    }
-
-    const waitForStableLayout = async () => {
-      await document.fonts?.ready;
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-      );
-    };
-
-    const runReturnTransition = async () => {
-      let storedTransition: StoredReturnTransition | undefined;
-      try {
-        const storedValue = sessionStorage.getItem(
-          'project-image-return-transition',
-        );
-        sessionStorage.removeItem('project-image-return-transition');
-        sessionStorage.removeItem('project-home-state');
-        if (storedValue)
-          storedTransition = JSON.parse(storedValue) as StoredReturnTransition;
-      } catch {
-        return;
-      }
-      if (
-        !storedTransition ||
-        !workTable ||
-        document.documentElement.classList.contains('is-page-transitioning')
-      )
-        return;
-      crossPageTransitionActive = true;
-      activeLayoutFlip?.progress(1).kill();
-
-      workTable.classList.toggle('is-grid-view', storedTransition.gridView);
-      viewButtons.forEach((button) => {
-        button.setAttribute(
-          'aria-pressed',
-          String(
-            (button.dataset.projectView === 'grid') ===
-              storedTransition?.gridView,
-          ),
-        );
-      });
-
-      const previousScrollBehavior =
-        document.documentElement.style.scrollBehavior;
-      document.documentElement.style.scrollBehavior = 'auto';
-      window.scrollTo(0, storedTransition.scrollY);
-      document.documentElement.style.scrollBehavior = previousScrollBehavior;
-
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        crossPageTransitionActive = false;
-        return;
-      }
-
-      const targetRow = rows.find(
-        (row) => row.dataset.projectTransition === storedTransition?.slug,
-      );
-      const targetImage = targetRow?.querySelector<HTMLImageElement>(
-        '[data-project-thumbnail]',
-      );
-      if (!targetImage) {
-        crossPageTransitionActive = false;
-        return;
-      }
-
-      const transitionImage = new Image();
-      transitionImage.src = storedTransition.src;
-      transitionImage.alt = '';
-      transitionImage.setAttribute('aria-hidden', 'true');
-      Object.assign(transitionImage.style, {
-        position: 'fixed',
-        left: '0px',
-        top: '0px',
-        width: '0px',
-        height: '0px',
-        zIndex: '1000',
-        objectFit: 'cover',
-        pointerEvents: 'none',
-        margin: '0',
-        willChange: 'transform',
-      });
-
-      const viewportScaleX = storedTransition.viewport?.width
-        ? window.innerWidth / storedTransition.viewport.width
-        : 1;
-      const viewportScaleY = storedTransition.viewport?.height
-        ? window.innerHeight / storedTransition.viewport.height
-        : 1;
-      gsap.set(transitionImage, {
-        left: storedTransition.rect.left * viewportScaleX,
-        top: storedTransition.rect.top * viewportScaleY,
-        width: storedTransition.rect.width * viewportScaleX,
-        height: storedTransition.rect.height * viewportScaleY,
-      });
-      document.body.append(transitionImage);
-      targetImage.style.visibility = 'hidden';
-
-      const cleanupImmediately = () => {
-        targetImage.style.removeProperty('visibility');
-        transitionImage.remove();
-        crossPageTransitionActive = false;
-      };
-
-      try {
-        await Promise.all([
-          transitionImage.decode(),
-          targetImage.decode(),
-          waitForStableLayout(),
-        ]);
-      } catch {
-        cleanupImmediately();
-        return;
-      }
-      window.scrollTo(0, storedTransition.scrollY);
-
-      const animateTransition = () => {
-        const targetRect = targetImage.getBoundingClientRect();
-        if (!targetRect.width || !targetRect.height) {
-          cleanupImmediately();
-          return;
-        }
-
-        const state = Flip.getState(transitionImage);
-        gsap.set(transitionImage, {
-          left: targetRect.left,
-          top: targetRect.top,
-          width: targetRect.width,
-          height: targetRect.height,
-        });
-
-        let cleanedUp = false;
-        let activeCrossPageFlip: gsap.core.Timeline | undefined;
-        const cleanup = () => {
-          if (cleanedUp) return;
-          cleanedUp = true;
-          targetImage.style.removeProperty('visibility');
-          transitionImage.remove();
-          crossPageTransitionActive = false;
-          window.removeEventListener('resize', handleResize);
-        };
-        const handleResize = () => {
-          activeCrossPageFlip?.progress(1).kill();
-          cleanup();
-        };
-        window.addEventListener('resize', handleResize, { once: true });
-
-        activeCrossPageFlip = Flip.from(state, {
-          duration: 0.82,
-          ease: 'power2.inOut',
-          absolute: true,
-          scale: true,
-          prune: true,
-          onComplete: cleanup,
-          onInterrupt: cleanup,
-        });
-      };
-
-      animateTransition();
-    };
-
-    void runReturnTransition();
-  };
-
-  document.addEventListener('astro:page-load', initializeHomePage);
-  initializeHomePage();
-</script>
